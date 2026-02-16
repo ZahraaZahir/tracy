@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: tracy-db
+    environment:
+      POSTGRES_USER: tracy_admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: tracy_world
+    ports:
+      - "5432:5432"
+    volumes:
+      - tracy_db_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    container_name: tracy-api
+    ports:
+      - "3050:3050"
+    environment:
+      DATABASE_URL: postgresql://tracy_admin:password123@postgres:5432/tracy_world?schema=public
+      PORT: 3050
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  tracy_db_data:
