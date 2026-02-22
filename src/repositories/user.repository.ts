@@ -2,13 +2,17 @@ import { prisma } from '../lib/prisma.js';
 
 export class UserRepository {
 
-  async findByEmail(email: string) {
-    return await prisma.user.findUnique({
-      where: { email },
-      include: { profile: true }
-    });
-  }
-
+async findByIdentifier(identifier: string) {
+  return await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: identifier },
+        { profile: { username: identifier } }
+      ]
+    },
+    include: { profile: true }
+  });
+}
 
   async createUser(email: string, passwordHash: string, username: string) {
     return await prisma.user.create({

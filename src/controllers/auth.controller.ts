@@ -29,17 +29,18 @@ export const register = async (req: Request, res: Response) => {
 };
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    const result = await authService.login(email, password);
+    const { identifier, password } = req.body;
+    
+    const result = await authService.login(identifier, password);
     
     res.status(200).json({
-      message: "Login successful. Access granted, developer.",
+      message: "Login successful.",
       data: result
     });
   } catch (error: any) {
     if (error.message === 'INVALID_CREDENTIALS') {
-      return res.status(401).json({ error: "Unauthorized: Invalid email or password." });
+      return res.status(401).json({ error: "Invalid credentials." });
     }
-    res.status(500).json({ error: "System glitch." });
+    res.status(500).json({ error: "Internal server error." });
   }
 };
