@@ -1,23 +1,17 @@
 import 'dotenv/config';
-import express, {Request, Response} from 'express';
-import {Pool} from 'pg';
-import {PrismaPg} from '@prisma/adapter-pg';
-import {PrismaClient} from '@prisma/client';
+import express, { Request, Response } from 'express';
+import authRoutes from './routes/auth.routes.js'; 
+import { prisma } from './lib/prisma.js'; 
 
 const PORT = 3050;
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  console.error('DATABASE_URL environment variable is not set.');
-  process.exit(1);
-}
-
-const pool = new Pool({connectionString: databaseUrl});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({adapter});
-
 const app = express();
+
+
 app.use(express.json());
+
+
+app.use('/api/v1/auth', authRoutes);
+
 
 app.get('/status', (req: Request, res: Response) => {
   res.json({
@@ -29,14 +23,11 @@ app.get('/status', (req: Request, res: Response) => {
 
 app.get('/', async (req: Request, res: Response) => {
   try {
+
     await prisma.$connect();
-    res.send(
-      `<h1>Tracy Backend is Running</h1><p>Database connected successfully.</p>`,
-    );
+    res.send(`<h1>Tracy Backend is Running</h1><p>Database connected successfully.</p>`);
   } catch (error) {
-    res
-      .status(500)
-      .send(`<h1>Tracy Backend is Running</h1><p>Database Error: ${error}</p>`);
+    res.status(500).send(`<h1>Tracy Backend is Running</h1><p>Database Error: ${error}</p>`);
   }
 });
 
