@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import cors from 'cors';
 import express, {Request, Response} from 'express';
 import authRoutes from './routes/auth.routes.js';
 import {prisma} from './lib/prisma.js';
@@ -7,6 +8,7 @@ const PORT = 3050;
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 app.use('/api/v1/auth', authRoutes);
 
