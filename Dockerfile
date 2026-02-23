@@ -1,11 +1,16 @@
 FROM node:22-slim
 
-RUN apt-get update -y && apt-get install -y openssl
+RUN apt-get update -y && \
+    apt-get install -y openssl python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --ignore-scripts
+
+COPY prisma ./prisma/
+
+RUN npm install
 
 COPY . .
 
