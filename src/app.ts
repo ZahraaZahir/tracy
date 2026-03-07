@@ -3,6 +3,7 @@ import cors from 'cors';
 import express, {Request, Response} from 'express';
 import authRoutes from './routes/auth.routes.js';
 import worldRoutes from './routes/world.routes.js';
+import entityRoutes from './routes/entity.routes.js';
 import {prisma} from './lib/prisma.js';
 
 const PORT = 3050;
@@ -13,6 +14,7 @@ app.use(cors());
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/world', worldRoutes);
+app.use('/api/v1/entities', entityRoutes);
 
 app.get('/status', (req: Request, res: Response) => {
   res.json({
