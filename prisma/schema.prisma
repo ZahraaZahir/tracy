@@ -36,8 +36,6 @@ model SaveState {
 }
 
 model GameEntity {
-  id           String   @id 
-  glitchedCode Json     
-  fixedCode    Json     
-  createdAt    DateTime @default(now())
+  id        String   @id 
+  createdAt DateTime @default(now())
 }

@@ -1,10 +1,6 @@
 import { z } from 'zod';
 
 
-export const entityCodeSchema = z.object({
-  visual_mode: z.string(),
-  intensity: z.number().min(0).max(1),
-  color: z.string().optional(),
+export const entityParamSchema = z.object({
+  id: z.string().min(1, "Entity ID is required"),
 });
-
-export type EntityCode = z.infer<typeof entityCodeSchema>;
