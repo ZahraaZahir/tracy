@@ -1,20 +1,19 @@
-import { EntityRepository } from '../repositories/entity.repository.js';
+import {EntityRepository} from '../repositories/entity.repository.js';
 
 export class EntityService {
-  private repo = new EntityRepository();
+  private entityRepo = new EntityRepository();
 
   async getEntityState(entityId: string, userId: string) {
-    const entity = await this.repo.getEntityById(entityId);
+    const entity = await this.entityRepo.getEntityById(entityId);
     if (!entity) throw new Error('NOT_FOUND');
 
-    
-    const isFixed = await this.repo.isFixed(userId, entityId);
+    const isFixed = await this.entityRepo.isFixed(userId, entityId);
 
     return {
       id: entityId,
       isFixed,
-      templateCode: entity.templateCode, 
-      solutionMap: entity.solutionMap    
+      templateCode: entity.templateCode,
+      solutionMap: entity.solutionMap,
     };
   }
 }

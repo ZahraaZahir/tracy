@@ -1,9 +1,9 @@
-import { prisma } from '../lib/prisma.js';
+import {prisma} from '../lib/prisma.js';
 
 export class EntityRepository {
   async getEntityById(id: string) {
     return await prisma.gameEntity.findUnique({
-      where: { id }
+      where: {id},
     });
   }
 
@@ -13,9 +13,9 @@ export class EntityRepository {
         userId: userId,
         data: {
           path: ['fixedGlitches'],
-          array_contains: entityId
-        }
-      }
+          array_contains: entityId,
+        },
+      },
     });
     return !!save;
   }

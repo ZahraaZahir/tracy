@@ -36,10 +36,10 @@ model SaveState {
 }
 
 model GameEntity {
-  id             String   @id 
-  type           String   @default("NPC")
-  templateCode   String   
-  solutionMap    Json     
-  errorMessages  Json     
-  createdAt      DateTime @default(now())
+  id            String   @id
+  type          String   @default("NPC")
+  templateCode  String
+  solutionMap   Json
+  errorMessages Json
+  createdAt     DateTime @default(now())
 }
