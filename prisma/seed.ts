@@ -9,20 +9,41 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('Seeding NPC IDs into the world...');
-  const entities = ['npc_01', 'npc_02', 'glitch_door_01'];
+  console.log('🌱 Seeding Game Entities with Puzzle Logic...');
+  const puzzles = [
+    {
+      id: 'npc_cow_01',
+      glitched: { gravity: 0, floating: true },
+      fixed: { gravity: 9.8, floating: false }
+    },
+    {
+      id: 'npc_girl_farmer_01',
+      glitched: { move_speed: 0, animation: "frozen" },
+      fixed: { move_speed: 100, animation: "walk" }
+    },
+    {
+      id: 'npc_mouse_01',
+      glitched: { size_multiplier: 10 },
+      fixed: { size_multiplier: 1 }
+    }
+  ];
 
-  for (const entityId of entities) {
+  for (const p of puzzles) {
     await prisma.gameEntity.upsert({
-      where: { id: entityId },
-      update: {}, 
-      create: {
-        id: entityId 
+      where: { id: p.id },
+      update: { 
+        glitchedCode: p.glitched, 
+        fixedCode: p.fixed 
+      },
+      create: { 
+        id: p.id, 
+        glitchedCode: p.glitched, 
+        fixedCode: p.fixed 
       },
     });
   }
 
-  console.log('Seed complete.');
+  console.log('Seed complete. 3 NPCs initialized.');
 }
 
 main()
