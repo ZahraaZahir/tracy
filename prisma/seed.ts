@@ -10,38 +10,29 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🌱 Seeding Game Entities with Puzzle Logic...');
-  const puzzles = [
-    {
-      id: 'npc_cow_01',
-      glitched: { gravity: 0, floating: true },
-      fixed: { gravity: 9.8, floating: false }
-    },
-    {
-      id: 'npc_girl_farmer_01',
-      glitched: { move_speed: 0, animation: "frozen" },
-      fixed: { move_speed: 100, animation: "walk" }
-    },
-    {
-      id: 'npc_mouse_01',
-      glitched: { size_multiplier: 10 },
-      fixed: { size_multiplier: 1 }
-    }
-  ];
-
-  for (const p of puzzles) {
-    await prisma.gameEntity.upsert({
-      where: { id: p.id },
-      update: { 
-        glitchedCode: p.glitched, 
-        fixedCode: p.fixed 
-      },
-      create: { 
-        id: p.id, 
-        glitchedCode: p.glitched, 
-        fixedCode: p.fixed 
-      },
-    });
+  
+const puzzles = [
+  {
+    id: 'npc_cow_01',
+    templateCode: 'var gravity = {{s1}}\nif gravity < 1:\n    status = "floating"',
+    solutionMap: { s1: 9.8 },
+    errorMessages: { s1: "Cows need Earth gravity to stay grounded!" }
+  },
+  {
+    id: 'npc_mouse_01',
+    templateCode: 'func update():\n    size = {{s1}}\n    speed = 10',
+    solutionMap: { s1: 1 },
+    errorMessages: { s1: "The mouse is too big for its holes!" }
   }
+];
+
+for (const p of puzzles) {
+  await prisma.gameEntity.upsert({
+    where: { id: p.id },
+    update: { templateCode: p.templateCode, solutionMap: p.solutionMap, errorMessages: p.errorMessages },
+    create: { id: p.id, templateCode: p.templateCode, solutionMap: p.solutionMap, errorMessages: p.errorMessages }
+  });
+}
 
   console.log('Seed complete. 3 NPCs initialized.');
 }
