@@ -1,40 +1,67 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
+import {PrismaClient} from '@prisma/client';
+import {PrismaPg} from '@prisma/adapter-pg';
 import pg from 'pg';
 import 'dotenv/config';
 
 const connectionString = process.env.DATABASE_URL;
-const pool = new pg.Pool({ connectionString });
+
+const pool = new pg.Pool({connectionString});
 const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient({adapter});
 
 async function main() {
-  console.log('🌱 Seeding Game Entities with Puzzle Logic...');
-  
-const puzzles = [
-  {
-    id: 'npc_cow_01',
-    templateCode: 'var gravity = {{s1}}\nif gravity < 1:\n    status = "floating"',
-    solutionMap: { s1: 9.8 },
-    errorMessages: { s1: "Cows need Earth gravity to stay grounded!" }
-  },
-  {
-    id: 'npc_mouse_01',
-    templateCode: 'func update():\n    size = {{s1}}\n    speed = 10',
-    solutionMap: { s1: 1 },
-    errorMessages: { s1: "The mouse is too big for its holes!" }
+  console.log('Seeding Smart Puzzles for BitValley NPCs...');
+
+  const puzzles = [
+    {
+      id: 'npc_cow_01',
+      templateCode:
+        'class Cow(Entity):\n    def apply_physics(self):\n        self.gravity_multiplier = {{s1}}\n        self.is_floating = (self.gravity_multiplier == 0)',
+      solutionMap: {s1: 1.0},
+      errorMessages: {
+        s1: 'The cow is still defying gravity! Check the gravity constant.',
+      },
+    },
+    {
+      id: 'npc_girl_farmer_01',
+      templateCode:
+        'class Farmer(Entity):\n    def update_movement(self):\n        self.move_right = true\n        self.move_left = {{s1}}\n',
+      solutionMap: {s1: false},
+      errorMessages: {
+        s1: 'Logic Conflict: A character cannot move left and right simultaneously.',
+      },
+    },
+    {
+      id: 'npc_mouse_01',
+      templateCode:
+        'class Garden(Entity):\n    def update(self):\n        var active_seed = {{s1}}\n        # ERROR: Plant() expects SeedObject, received NULL',
+      solutionMap: {s1: 'Sunflower'},
+      errorMessages: {
+        s1: 'The soil remains empty. Tracy, the mouse needs to plant these Sunflowers!',
+      },
+    },
+  ];
+
+  for (const p of puzzles) {
+    await prisma.gameEntity.upsert({
+      where: {id: p.id},
+      update: {
+        templateCode: p.templateCode,
+        solutionMap: p.solutionMap,
+        errorMessages: p.errorMessages,
+        type: 'NPC',
+      },
+      create: {
+        id: p.id,
+        templateCode: p.templateCode,
+        solutionMap: p.solutionMap,
+        errorMessages: p.errorMessages,
+        type: 'NPC',
+      },
+    });
   }
-];
 
-for (const p of puzzles) {
-  await prisma.gameEntity.upsert({
-    where: { id: p.id },
-    update: { templateCode: p.templateCode, solutionMap: p.solutionMap, errorMessages: p.errorMessages },
-    create: { id: p.id, templateCode: p.templateCode, solutionMap: p.solutionMap, errorMessages: p.errorMessages }
-  });
-}
-
-  console.log('Seed complete. 3 NPCs initialized.');
+  console.log('Seed complete. All 3 demo NPCs are logical.');
 }
 
 main()
