@@ -13,7 +13,7 @@ export class EntityService {
       id: entityId,
       isFixed,
       templateCode: entity.templateCode,
-      solutionMap: entity.solutionMap,
+      solutionMap: isFixed ? entity.solutionMap : null,
     };
   }
 }
