@@ -10,7 +10,7 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({adapter});
 
 async function main() {
-  console.log('Seeding Smart Puzzles for BitValley NPCs...');
+  console.log('Seeding NPCs...');
 
   const puzzles = [
     {
@@ -61,7 +61,7 @@ async function main() {
     });
   }
 
-  console.log('Seed complete. All 3 demo NPCs are logical.');
+  console.log('Seed complete. All demo NPCs are seeded.');
 }
 
 main()
