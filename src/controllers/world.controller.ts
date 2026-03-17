@@ -27,4 +27,17 @@ export const saveState = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const loadState = async (req: AuthenticatedRequest, res: Response) => {};
+export const loadState = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({error: 'User missing'});
+
+    const result = await worldService.load(userId);
+    res
+      .status(200)
+      .json({message: 'World state loaded successfully', data: result});
+  } catch (error) {
+    console.error('Load error: ', error);
+    res.status(500).json({error: 'Internal server error.'});
+  }
+};
