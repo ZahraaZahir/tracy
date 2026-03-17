@@ -14,6 +14,7 @@ export class EntityService {
       isFixed,
       templateCode: entity.templateCode,
       solutionMap: isFixed ? entity.solutionMap : null,
+      errorMessages: isFixed ? entity.errorMessages : null,
     };
   }
 }

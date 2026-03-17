@@ -11,9 +11,8 @@ export class EntityRepository {
     const save = await prisma.saveState.findFirst({
       where: {
         userId: userId,
-        data: {
-          path: ['fixedGlitches'],
-          array_contains: entityId,
+        fixedGlitches: {
+          some: {id: entityId},
         },
       },
     });

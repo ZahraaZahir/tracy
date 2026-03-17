@@ -11,15 +11,23 @@ export class WorldService {
 
   async load(userId: string) {
     const saveState = await this.worldRepo.getWorldState(userId);
+
     if (!saveState) {
       return {
         posX: 0,
         posY: 0,
-        mapName: 'main-world',
+        mapName: 'main_world',
         fixedGlitches: [],
-        inventory: [],
       };
     }
-    return saveState.data;
+
+    const fixedIds = saveState.fixedGlitches.map((glitch) => glitch.id);
+
+    return {
+      posX: saveState.posX,
+      posY: saveState.posY,
+      mapName: saveState.mapName,
+      fixedGlitches: fixedIds,
+    };
   }
 }
