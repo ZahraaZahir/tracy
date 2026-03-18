@@ -1,4 +1,5 @@
 import {prisma} from '../lib/prisma.js';
+import {WorldService} from '../services/world.service.js';
 
 export class EntityRepository {
   async getEntityById(id: string) {
@@ -29,9 +30,7 @@ export class EntityRepository {
       },
       create: {
         userId,
-        posX: 0,
-        posY: 0,
-        mapName: 'main_world',
+        ...WorldService.DEFAULT_STATE,
         fixedGlitches: {
           connect: {id: entityId},
         },

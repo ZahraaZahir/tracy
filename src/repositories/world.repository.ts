@@ -8,7 +8,12 @@ export class WorldRepository {
     return await prisma.saveState.upsert({
       where: {userId},
       update: {posX, posY, mapName},
-      create: {userId, posX, posY, mapName},
+      create: {
+        userId,
+        posX,
+        posY,
+        mapName,
+      },
     });
   }
 

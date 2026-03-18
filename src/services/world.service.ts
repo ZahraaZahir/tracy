@@ -4,6 +4,12 @@ import {saveStateSchema} from '../validators/world.validator.js';
 export class WorldService {
   private worldRepo = new WorldRepository();
 
+  public static readonly DEFAULT_STATE = {
+    posX: 0,
+    posY: 0,
+    mapName: 'main_world',
+  };
+
   async save(userId: string, rawData: any) {
     const validData = saveStateSchema.parse(rawData);
     return await this.worldRepo.saveWorldState(userId, validData);
@@ -14,9 +20,7 @@ export class WorldService {
 
     if (!saveState) {
       return {
-        posX: 0,
-        posY: 0,
-        mapName: 'main_world',
+        ...WorldService.DEFAULT_STATE,
         fixedGlitches: [],
       };
     }
