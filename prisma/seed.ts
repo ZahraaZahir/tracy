@@ -49,14 +49,12 @@ async function main() {
         templateCode: p.templateCode,
         solutionMap: p.solutionMap,
         errorMessages: p.errorMessages,
-        type: 'NPC',
       },
       create: {
         id: p.id,
         templateCode: p.templateCode,
         solutionMap: p.solutionMap,
         errorMessages: p.errorMessages,
-        type: 'NPC',
       },
     });
   }
