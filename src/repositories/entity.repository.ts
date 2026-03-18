@@ -6,16 +6,4 @@ export class EntityRepository {
       where: {id},
     });
   }
-
-  async isFixed(userId: string, entityId: string): Promise<boolean> {
-    const save = await prisma.saveState.findFirst({
-      where: {
-        userId: userId,
-        fixedGlitches: {
-          some: {id: entityId},
-        },
-      },
-    });
-    return !!save;
-  }
 }
