@@ -28,8 +28,9 @@ export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
 export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const {id} = entityParamSchema.parse(req.params);
-    const userId = req.user?.userId;
     const {answers} = solveEntitySchema.parse(req.body);
+
+    const userId = req.user?.userId;
 
     if (!userId) return res.status(401).json({error: 'Unauthorized'});
 
