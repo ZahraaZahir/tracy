@@ -21,3 +21,27 @@ export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
     res.status(500).json({error: 'Internal server error'});
   }
 };
+
+export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const {id} = entityParamSchema.parse(req.params);
+    const userId = req.user?.userId;
+    const {answers} = req.body;
+
+    if (!userId) return res.status(401).json({error: 'Unauthorized'});
+
+    const result = await entityService.solveEntity(id, userId, answers);
+
+    if (result.success) {
+      return res.status(200).json(result);
+    } else {
+      return res.status(400).json(result);
+    }
+  } catch (error: any) {
+    if (error.message === 'NOT_FOUND') {
+      return res.status(404).json({error: 'Entity not found.'});
+    }
+    console.error('SOLVE_ERROR:', error);
+    res.status(500).json({error: 'Internal server error'});
+  }
+};

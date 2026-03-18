@@ -18,4 +18,24 @@ export class EntityRepository {
     });
     return !!save;
   }
+
+  async markAsFixed(userId: string, entityId: string) {
+    return await prisma.saveState.upsert({
+      where: {userId},
+      update: {
+        fixedGlitches: {
+          connect: {id: entityId},
+        },
+      },
+      create: {
+        userId,
+        posX: 0,
+        posY: 0,
+        mapName: 'main_world',
+        fixedGlitches: {
+          connect: {id: entityId},
+        },
+      },
+    });
+  }
 }

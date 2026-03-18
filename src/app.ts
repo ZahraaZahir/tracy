@@ -1,3 +1,5 @@
+console.log('!!! THE SERVER IS STARTING NOW !!!');
+
 import 'dotenv/config';
 import cors from 'cors';
 import express, {Request, Response} from 'express';
@@ -6,8 +8,13 @@ import worldRoutes from './routes/world.routes.js';
 import entityRoutes from './routes/entity.routes.js';
 import {prisma} from './lib/prisma.js';
 
-const PORT = 3050;
+const PORT = 3060;
 const app = express();
+
+app.use((req, res, next) => {
+  console.log(`[DEBUG] Incoming Request: ${req.method} ${req.url}`);
+  next();
+});
 
 app.use(express.json());
 app.use(cors());
