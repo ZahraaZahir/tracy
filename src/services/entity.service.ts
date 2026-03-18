@@ -1,13 +1,16 @@
 import {EntityRepository} from '../repositories/entity.repository.js';
+import {WorldRepository} from '../repositories/world.repository.js';
 
 export class EntityService {
   private entityRepo = new EntityRepository();
+  private worldRepo = new WorldRepository();
 
   async getEntityState(entityId: string, userId: string) {
     const entity = await this.entityRepo.getEntityById(entityId);
     if (!entity) throw new Error('NOT_FOUND');
 
-    const isFixed = await this.entityRepo.isFixed(userId, entityId);
+    const save = await this.worldRepo.getWorldState(userId);
+    const isFixed = save?.fixedGlitches.includes(entityId) ?? false;
 
     return {
       id: entityId,
@@ -26,8 +29,10 @@ export class EntityService {
     const entity = await this.entityRepo.getEntityById(entityId);
     if (!entity) throw new Error('NOT_FOUND');
 
-    const alreadyFixed = await this.entityRepo.isFixed(userId, entityId);
-    if (alreadyFixed) return {success: true, message: 'Already fixed.'};
+    const save = await this.worldRepo.getWorldState(userId);
+    if (save?.fixedGlitches.includes(entityId)) {
+      return {success: true, alreadySolved: true, message: 'Already fixed.'};
+    }
 
     const solutions = entity.solutionMap as Record<string, any>;
     const errorMessages = entity.errorMessages as Record<string, any>;
@@ -37,11 +42,7 @@ export class EntityService {
       const correctValue = solutions[slotId];
 
       if (playerValue === undefined || playerValue === null) {
-        return {
-          success: false,
-          wrongSlot: slotId,
-          message: 'This logic slot is empty.',
-        };
+        return {success: false, wrongSlot: slotId, message: 'Slot is empty.'};
       }
 
       if (String(playerValue) !== String(correctValue)) {
@@ -53,8 +54,7 @@ export class EntityService {
       }
     }
 
-    await this.entityRepo.markAsFixed(userId, entityId);
-
+    await this.worldRepo.addFixedGlitch(userId, entityId);
     return {success: true, message: 'Entity is fixed!'};
   }
 }
