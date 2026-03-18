@@ -6,7 +6,7 @@ import worldRoutes from './routes/world.routes.js';
 import entityRoutes from './routes/entity.routes.js';
 import {prisma} from './lib/prisma.js';
 
-const PORT = 3060;
+const PORT = 3050;
 const app = express();
 
 app.use(express.json());
