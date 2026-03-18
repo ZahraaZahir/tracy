@@ -1,7 +1,10 @@
 import {Response} from 'express';
 import {AuthenticatedRequest} from '../types/auth.types.js';
 import {EntityService} from '../services/entity.service.js';
-import {entityParamSchema} from '../validators/entity.validator.js';
+import {
+  entityParamSchema,
+  solveEntitySchema,
+} from '../validators/entity.validator.js';
 
 const entityService = new EntityService();
 
@@ -26,7 +29,7 @@ export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const {id} = entityParamSchema.parse(req.params);
     const userId = req.user?.userId;
-    const {answers} = req.body;
+    const {answers} = solveEntitySchema.parse(req.body);
 
     if (!userId) return res.status(401).json({error: 'Unauthorized'});
 
