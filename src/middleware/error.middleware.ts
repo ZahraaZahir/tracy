@@ -15,7 +15,7 @@ export const errorHandler = (
   }
 
   if (err instanceof ZodError) {
-    return res.status(400).json({error: 'Invalid data', details: err.format});
+    return res.status(400).json({error: 'Invalid data', details: err.issues});
   }
 
   return res.status(500).json({error: 'Internal Server Error'});
