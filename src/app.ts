@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.routes.js';
 import worldRoutes from './routes/world.routes.js';
 import entityRoutes from './routes/entity.routes.js';
 import {prisma} from './lib/prisma.js';
+import {errorHandler} from './middleware/error.middleware.js';
 
 const PORT = 3050;
 const app = express();
@@ -36,6 +37,8 @@ app.get('/', async (req: Request, res: Response) => {
       .send(`<h1>Tracy Backend is Running</h1><p>Database Error: ${error}</p>`);
   }
 });
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`[SERVER] Tracy running at http://localhost:${PORT}`);

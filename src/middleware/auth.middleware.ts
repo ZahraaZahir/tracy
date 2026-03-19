@@ -1,4 +1,4 @@
-import {Request, Response, NextFunction} from 'express';
+import {Response, NextFunction} from 'express';
 import jwt from 'jsonwebtoken';
 import {AuthenticatedRequest} from '../types/auth.types.js';
 
@@ -8,14 +8,19 @@ export const authenticateToken = (
   next: NextFunction,
 ) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader) {
-    return res.status(401).json({error: 'No token provided.'});
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    throw new Error('JWT_SECRET not configured.');
   }
-  if (!authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({error: 'Invalid token format.'});
+
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({error: 'Invalid or missing token.'});
   }
+
   const token = authHeader.split(' ')[1];
-  jwt.verify(token, process.env.JWT_SECRET || 'dev-secret', (err, user) => {
+
+  jwt.verify(token, secret, (err, user) => {
     if (err) {
       return res
         .status(403)

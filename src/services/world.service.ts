@@ -1,7 +1,7 @@
 import {WorldRepository} from '../repositories/world.repository.js';
 import {EntityRepository} from '../repositories/entity.repository.js';
 import {saveStateSchema} from '../validators/world.validator.js';
-import {INITIAL_GAME_STATE} from '../config/game.config.js';
+import {NotFoundError} from '../errors/errors.js';
 
 export class WorldService {
   private worldRepo = new WorldRepository();
@@ -9,18 +9,22 @@ export class WorldService {
 
   async save(userId: string, rawData: any) {
     const validData = saveStateSchema.parse(rawData);
-    return await this.worldRepo.saveWorldState(userId, validData);
+    await this.worldRepo.saveWorldState(userId, validData);
+
+    return await this.load(userId);
   }
 
   async load(userId: string) {
     const save = await this.worldRepo.getWorldState(userId);
-    if (!save) return {...INITIAL_GAME_STATE, fixedGlitches: []};
-    return save;
+    return save || {posX: 0, posY: 0, mapName: 'main_world', fixedGlitches: []};
   }
 
   async solve(userId: string, entityId: string, answers: Record<string, any>) {
     const entity = await this.entityRepo.getEntityById(entityId);
-    if (!entity) throw new Error('NOT_FOUND');
+
+    if (!entity) {
+      throw new NotFoundError(`NPC with ID ${entityId} not found.`);
+    }
 
     const save = await this.worldRepo.getWorldState(userId);
     if (save?.fixedGlitches.includes(entityId)) {
