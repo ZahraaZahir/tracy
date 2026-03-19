@@ -9,7 +9,9 @@ export class WorldService {
 
   async save(userId: string, rawData: any) {
     const validData = saveStateSchema.parse(rawData);
-    return await this.worldRepo.saveWorldState(userId, validData);
+    await this.worldRepo.saveWorldState(userId, validData);
+
+    return await this.load(userId);
   }
 
   async load(userId: string) {
