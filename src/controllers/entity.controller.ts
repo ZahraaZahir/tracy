@@ -7,12 +7,22 @@ import {
   solveEntitySchema,
 } from '../validators/entity.validator.js';
 
-const entityService = new EntityService();
-const worldService = new WorldService();
+let entityService: EntityService;
+let worldService: WorldService;
+
+const getEntityService = () => {
+  if (!entityService) entityService = new EntityService();
+  return entityService;
+};
+
+const getWorldService = () => {
+  if (!worldService) worldService = new WorldService();
+  return worldService;
+};
 
 export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
   const {id} = entityParamSchema.parse(req.params);
-  const result = await entityService.getEntityState(id, req.user!.userId);
+  const result = await getEntityService().getEntityState(id, req.user!.userId);
   res.status(200).json(result);
 };
 
@@ -20,7 +30,7 @@ export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
   const {id} = entityParamSchema.parse(req.params);
   const {answers} = solveEntitySchema.parse(req.body);
 
-  const result = await worldService.solve(req.user!.userId, id, answers);
+  const result = await getWorldService().solve(req.user!.userId, id, answers);
 
   res.status(result.success ? 200 : 400).json(result);
 };
