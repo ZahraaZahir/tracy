@@ -7,6 +7,11 @@ export class WorldService {
   private worldRepo = new WorldRepository();
   private entityRepo = new EntityRepository();
 
+  async isEntityFixed(userId: string, entityId: string): Promise<boolean> {
+    const save = await this.worldRepo.getWorldState(userId);
+    return save?.fixedGlitches.includes(entityId) ?? false;
+  }
+
   async save(userId: string, rawData: any) {
     const validData = saveStateSchema.parse(rawData);
     await this.worldRepo.saveWorldState(userId, validData);
