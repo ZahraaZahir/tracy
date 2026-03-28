@@ -1,4 +1,5 @@
 import {prisma} from '../lib/prisma.js';
+import {INITIAL_GAME_STATE} from '../config/game.config.js';
 
 export class UserRepository {
   async findByIdentifier(identifier: string) {
@@ -17,6 +18,13 @@ export class UserRepository {
         passwordHash: passwordHash,
         profile: {
           create: {username: username},
+        },
+        saveState: {
+          create: {
+            posX: INITIAL_GAME_STATE.posX,
+            posY: INITIAL_GAME_STATE.posY,
+            mapName: INITIAL_GAME_STATE.mapName,
+          },
         },
       },
     });

@@ -4,10 +4,9 @@ import {INITIAL_GAME_STATE} from '../config/game.config.js';
 
 export class WorldRepository {
   async saveWorldState(userId: string, saveStateData: SaveStateData) {
-    return await prisma.saveState.upsert({
+    return await prisma.saveState.update({
       where: {userId},
-      update: saveStateData,
-      create: {userId, ...saveStateData},
+      data: saveStateData,
     });
   }
 
@@ -28,14 +27,9 @@ export class WorldRepository {
   }
 
   async addFixedGlitch(userId: string, entityId: string) {
-    return await prisma.saveState.upsert({
+    return await prisma.saveState.update({
       where: {userId},
-      update: {
-        fixedGlitches: {connect: {id: entityId}},
-      },
-      create: {
-        userId,
-        ...INITIAL_GAME_STATE,
+      data: {
         fixedGlitches: {connect: {id: entityId}},
       },
     });
