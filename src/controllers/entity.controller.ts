@@ -4,11 +4,10 @@ import { EntityService } from '../services/entity.service.js';
 import { WorldService } from '../services/world.service.js';
 import { entityParamSchema, solveEntitySchema } from '../validators/entity.validator.js';
 
-// 1. Declare the variables but don't fill them yet
+
 let entityService: EntityService;
 let worldService: WorldService;
 
-// 2. Zahraa's Lazy Getters
 const getEntityService = () => {
   if (!entityService) entityService = new EntityService();
   return entityService;
