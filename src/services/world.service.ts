@@ -20,20 +20,40 @@ export class WorldService {
   }
 
   async load(userId: string) {
-    const save = await this.worldRepo.getWorldState(userId);
-    return save || {posX: 0, posY: 0, mapName: 'main_world', fixedGlitches: []};
+    const [save, totalEntities] = await Promise.all([
+      this.worldRepo.getWorldState(userId),
+      this.entityRepo.countAllEntities(),
+    ]);
+
+    if (!save) {
+      return {
+        posX: 0,
+        posY: 0,
+        mapName: 'main_world',
+        fixedGlitches: [],
+        totalEntities,
+      };
+    }
+
+    return {
+      ...save,
+      totalEntities,
+    };
   }
 
   async solve(userId: string, entityId: string, answers: Record<string, any>) {
     const entity = await this.entityRepo.getEntityById(entityId);
-
     if (!entity) {
       throw new NotFoundError(`NPC with ID ${entityId} not found.`);
     }
 
-    const save = await this.worldRepo.getWorldState(userId);
-    if (save?.fixedGlitches.includes(entityId)) {
-      return {success: true, alreadySolved: true, message: 'Already fixed.'};
+    const isAlreadyFixed = await this.isEntityFixed(userId, entityId);
+    if (isAlreadyFixed) {
+      return {
+        success: true,
+        alreadySolved: true,
+        message: 'Entity has already been fixed!',
+      };
     }
 
     const solutions = entity.solutionMap as Record<string, any>;
@@ -44,8 +64,13 @@ export class WorldService {
       const correctValue = solutions[slotId];
 
       if (playerValue === undefined || playerValue === null) {
-        return {success: false, wrongSlot: slotId, message: 'Slot is empty.'};
+        return {
+          success: false,
+          wrongSlot: slotId,
+          message: 'Logic block missing.',
+        };
       }
+
       if (String(playerValue) !== String(correctValue)) {
         return {
           success: false,
@@ -56,6 +81,14 @@ export class WorldService {
     }
 
     await this.worldRepo.addFixedGlitch(userId, entityId);
-    return {success: true, message: 'Entity is fixed!'};
+
+    const updatedState = await this.load(userId);
+
+    return {
+      success: true,
+      message: 'Entity is fixed!',
+      fixedGlitches: updatedState.fixedGlitches,
+      totalEntities: updatedState.totalEntities,
+    };
   }
 }
