@@ -1,4 +1,4 @@
-import { CodeLine } from '../types/entity.types.js'; 
+import { CodeLine } from '../types/entity.types.js';
 
 export const tokenizeTemplate = (template: string): CodeLine[] => {
   const lines: CodeLine[] = [];
@@ -21,21 +21,29 @@ export const tokenizeTemplate = (template: string): CodeLine[] => {
       continue;
     }
 
-
     if (char === '{' && nextChar === '{') {
       if (accumulator.length > 0) {
         currentLine.push({ type: 'text', content: accumulator });
         accumulator = "";
       }
 
-
       i += 2;
-      let slotId = "";
+      let rawSlot = "";
       while (i < template.length && !(template[i] === '}' && template[i+1] === '}')) {
-        slotId += template[i];
+        rawSlot += template[i];
         i++;
       }
-      currentLine.push({ type: 'slot', id: slotId.trim() });
+      
+      const slotParts = rawSlot.split(':');
+      const slotId = slotParts[0].trim();
+      const initialValue = slotParts.length > 1 ? slotParts.slice(1).join(':').trim() : null;
+
+      currentLine.push({ 
+        type: 'slot', 
+        id: slotId, 
+        currentValue: initialValue 
+      });
+
       i += 2;
       continue;
     }    
@@ -43,7 +51,6 @@ export const tokenizeTemplate = (template: string): CodeLine[] => {
     i++;
   }
   
-
   if (accumulator.length > 0) {
     currentLine.push({ type: 'text', content: accumulator });
   }

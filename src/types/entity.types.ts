@@ -1,7 +1,8 @@
 export interface CodeToken {
   type: 'text' | 'slot';
-  content?: string; 
-  id?: string;   
+  content?: string;     
+  id?: string;          
+  currentValue?: string | null; 
 }
 
 export type CodeLine = CodeToken[];
