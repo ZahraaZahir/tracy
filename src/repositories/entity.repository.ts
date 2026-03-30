@@ -6,4 +6,7 @@ export class EntityRepository {
       where: {id},
     });
   }
+  async countAllEntities() {
+    return await prisma.gameEntity.count();
+  }
 }
