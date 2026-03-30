@@ -1,6 +1,7 @@
 import { EntityRepository } from '../repositories/entity.repository.js';
 import { NotFoundError } from '../errors/errors.js';
 import { EntityResponse } from '../types/entity.types.js'; 
+import { tokenizeTemplate } from '../utils/code.utils.js';
 
 export class EntityService {
   private entityRepo = new EntityRepository();
@@ -10,13 +11,15 @@ export class EntityService {
     if (!entity) {
       throw new NotFoundError(`NPC with ID ${entityId} not found.`);
     }
+        const tokenizedLines = tokenizeTemplate(entity.templateCode);
 
-    return {
-      id: entityId,
-      isFixed,
-      templateCode: entity.templateCode,
-      solutionMap: isFixed ? (entity.solutionMap as Record<string, any>) : null,
-      errorMessages: isFixed ? (entity.errorMessages as Record<string, any>) : null,
-    };
+
+      return {
+        id: entityId,
+        isFixed,
+        lines: tokenizedLines, // Godot now receives the blueprint
+        solutionMap: isFixed ? (entity.solutionMap as Record<string, any>) : null,
+        errorMessages: isFixed ? (entity.errorMessages as Record<string, any>) : null,
+      };
   }
 }
