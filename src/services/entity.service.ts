@@ -17,7 +17,7 @@ export class EntityService {
       return {
         id: entityId,
         isFixed,
-        lines: tokenizedLines, // Godot now receives the blueprint
+        lines: tokenizedLines, 
         solutionMap: isFixed ? (entity.solutionMap as Record<string, any>) : null,
         errorMessages: isFixed ? (entity.errorMessages as Record<string, any>) : null,
       };
