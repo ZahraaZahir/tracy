@@ -1,9 +1,11 @@
-import { Response } from 'express';
-import { AuthenticatedRequest } from '../types/auth.types.js';
-import { EntityService } from '../services/entity.service.js';
-import { WorldService } from '../services/world.service.js';
-import { entityParamSchema, solveEntitySchema } from '../validators/entity.validator.js';
-
+import {Response} from 'express';
+import {AuthenticatedRequest} from '../types/auth.types.js';
+import {EntityService} from '../services/entity.service.js';
+import {WorldService} from '../services/world.service.js';
+import {
+  entityParamSchema,
+  solveEntitySchema,
+} from '../validators/entity.validator.js';
 
 let entityService: EntityService;
 let worldService: WorldService;
@@ -19,7 +21,7 @@ const getWorldService = () => {
 };
 
 export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = entityParamSchema.parse(req.params);
+  const {id} = entityParamSchema.parse(req.params);
   const userId = req.user!.userId;
   const isFixed = await getWorldService().isEntityFixed(userId, id);
 
@@ -29,9 +31,9 @@ export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = entityParamSchema.parse(req.params);
-  const { answers } = solveEntitySchema.parse(req.body);
- const result = await getWorldService().solve(req.user!.userId, id, answers);
+  const {id} = entityParamSchema.parse(req.params);
+  const {answers} = solveEntitySchema.parse(req.body);
+  const result = await getWorldService().solve(req.user!.userId, id, answers);
 
   res.status(result.success ? 200 : 400).json(result);
 };

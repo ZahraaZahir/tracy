@@ -1,8 +1,8 @@
 export interface CodeToken {
-  type: 'text' | 'slot' | 'keyword' | 'punctuation'; 
-  content?: string;     
-  id?: string;          
-  currentValue?: string | null; 
+  type: 'text' | 'slot' | 'keyword' | 'punctuation';
+  content?: string;
+  id?: string;
+  currentValue?: string | null;
 }
 
 export type CodeLine = CodeToken[];
