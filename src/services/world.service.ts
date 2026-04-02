@@ -71,7 +71,10 @@ export class WorldService {
         };
       }
 
-      if (String(playerValue) !== String(correctValue)) {
+      const playerSnapshot = JSON.stringify(playerValue);
+      const correctSnapshot = JSON.stringify(correctValue);
+
+      if (playerSnapshot !== correctSnapshot) {
         return {
           success: false,
           wrongSlot: slotId,
@@ -79,7 +82,6 @@ export class WorldService {
         };
       }
     }
-
     await this.worldRepo.addFixedGlitch(userId, entityId);
 
     const updatedState = await this.load(userId);
