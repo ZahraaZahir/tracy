@@ -7,7 +7,7 @@ async function main() {
     {
       id: 'npc_cow_01',
       templateCode:
-        'class Cow(Entity):\n    def apply_physics(self):\n        self.gravity_multiplier = {{s1:-5.0}}\n        self.is_floating = (self.gravity_multiplier == 0)',
+        'class Cow(Entity):\n  def apply_physics(self):\n    self.gravity_multiplier = {{s1:-5.0}}\n   self.is_floating = (self.gravity_multiplier == 0)',
       solutionMap: {s1: 1.0},
       errorMessages: {
         s1: 'The cow is still defying gravity! Check the gravity constant.',
@@ -16,7 +16,7 @@ async function main() {
     {
       id: 'npc_girl_farmer_01',
       templateCode:
-        'class Farmer(Entity):\n    def update_movement(self):\n        self.move_right = true\n        self.move_left = {{s1:true}}\n',
+        'class Farmer(Entity):\n  def update_movement(self):\n    self.move_right = true\n    self.move_left = {{s1:true}}',
       solutionMap: {s1: false},
       errorMessages: {
         s1: 'Logic Conflict: A character cannot move left and right simultaneously.',
@@ -25,7 +25,7 @@ async function main() {
     {
       id: 'npc_mouse_01',
       templateCode:
-        'class Garden(Entity):\n    def update(self):\n        var active_seed = {{s1:"EMPTY_HANDS"}}\n        # ERROR: Plant() expects SeedObject, received NULL',
+        'class Garden(Entity):\n  def update(self):\n    var active_seed = {{s1:null}}',
       solutionMap: {s1: 'Sunflower'},
       errorMessages: {
         s1: 'The soil remains empty. Tracy, the mouse needs to plant these Sunflowers!',
@@ -49,13 +49,12 @@ async function main() {
       },
     });
   }
-
-  console.log('Seed complete. All demo NPCs are seeded.');
+  console.log('Seed complete.');
 }
 
 main()
   .catch((e) => {
-    console.error('Seed failed:', e);
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {
