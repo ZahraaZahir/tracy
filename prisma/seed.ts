@@ -7,7 +7,7 @@ async function main() {
     {
       id: 'npc_cow_01',
       templateCode:
-        'class Cow(Entity):\n  def apply_physics(self):\n    self.gravity_multiplier = {{s1:-5.0}}\n   self.is_floating = (self.gravity_multiplier == 0)',
+        'class Cow(Entity):\n  def apply_physics(self):\n    self.gravity_multiplier = {{s1:-5.0}}\n    self.is_floating = (self.gravity_multiplier == 0)',
       solutionMap: {s1: 1.0},
       errorMessages: {
         s1: 'The cow is still defying gravity! Check the gravity constant.',
