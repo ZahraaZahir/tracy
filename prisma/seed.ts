@@ -7,8 +7,8 @@ async function main() {
     {
       id: 'npc_cow_01',
       templateCode:
-        'class Cow(Entity):\n  def apply_physics(self):\n    self.gravity_multiplier = {{s1:-5.0}}\n    self.is_floating = (self.gravity_multiplier == 0)',
-      solutionMap: {s1: 1.0},
+        'class Cow(Entity):\n  var mass = 50\n  var gravity = {{s1:0}}\n  var velocity_y = 0\n  def apply_physics(self):\n    self.velocity_y += self.gravity\n    self.position_y += self.velocity_y\n    if self.position_y >= 300:\n      self.position_y = 300\n      self.velocity_y = 0',
+      solutionMap: {s1: 9.81},
       errorMessages: {
         s1: 'The cow is still defying gravity! Check the gravity constant.',
       },
@@ -25,7 +25,7 @@ async function main() {
     {
       id: 'npc_mouse_01',
       templateCode:
-        'class Garden(Entity):\n  def update(self):\n    var active_seed = {{s1:null}}',
+        'class Garden(Entity):\n  def update(self):\n    var selected_seed = {{s1:null}}\n    if selected_seed != null:\n       self.spawn_object(selected_seed)    else\n      return',
       solutionMap: {s1: 'Sunflower'},
       errorMessages: {
         s1: 'The soil remains empty. Tracy, the mouse needs to plant these Sunflowers!',
