@@ -25,7 +25,7 @@ async function main() {
     {
       id: 'npc_mouse_01',
       templateCode:
-        'class Garden(Entity):\n  def update(self):\n    var selected_seed = {{s1:null}}\n    if selected_seed != null:\n       self.spawn_object(selected_seed)    else\n      return',
+        'class Garden(Entity):\n  def update(self):\n    var selected_seed = {{s1:null}}\n    if selected_seed != null:\n       self.spawn_object(selected_seed)\n    else\n      return',
       solutionMap: {s1: 'Sunflower'},
       errorMessages: {
         s1: 'The soil remains empty. Tracy, the mouse needs to plant these Sunflowers!',
