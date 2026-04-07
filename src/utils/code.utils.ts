@@ -1,4 +1,4 @@
-import {CodeLine, CodeToken} from '../types/entity.types.js';
+import {CodeLine} from '../types/lexer.types.js';
 import {SYNTAX_CONFIG} from '../config/syntax.config.js';
 
 export const tokenizeTemplate = (template: string): CodeLine[] => {

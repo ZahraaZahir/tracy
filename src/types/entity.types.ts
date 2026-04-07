@@ -1,11 +1,4 @@
-export interface CodeToken {
-  type: 'text' | 'slot' | 'keyword' | 'punctuation';
-  content?: string;
-  id?: string;
-  currentValue?: string | null;
-}
-
-export type CodeLine = CodeToken[];
+import {CodeLine} from './lexer.types.js';
 
 export interface EntityResponse {
   id: string;
