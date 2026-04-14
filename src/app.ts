@@ -27,7 +27,6 @@ app.get('/status', (req: Request, res: Response) => {
 
 app.get('/', async (req: Request, res: Response) => {
   try {
-    await prisma.$connect();
     res.send(
       `<h1>Tracy Backend is Running</h1><p>Database connected successfully.</p>`,
     );
