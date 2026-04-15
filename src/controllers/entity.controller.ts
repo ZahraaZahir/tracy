@@ -27,7 +27,7 @@ export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
 
   const result = await getEntityService().getEntityState(id, isFixed);
 
-  res.status(200).json(result);
+  res.status(200).json({message: 'Entity state retrieved', data: result});
 };
 
 export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
@@ -35,5 +35,7 @@ export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
   const {answers} = solveEntitySchema.parse(req.body);
   const result = await getWorldService().solve(req.user!.userId, id, answers);
 
-  res.status(result.success ? 200 : 400).json(result);
+  res
+    .status(result.success ? 200 : 400)
+    .json({message: 'Entity state retrieved', data: result});
 };
