@@ -1,7 +1,7 @@
 import {CodeLine} from '../types/lexer.types.js';
 import {SYNTAX_CONFIG} from '../config/syntax.config.js';
 
-export const tokenizeTemplate = (template: string): CodeLine[] => {
+export const tokenizeCodeTemplate = (template: string): CodeLine[] => {
   const lines: CodeLine[] = [];
   let currentLine: CodeLine = [];
   let buffer = '';
