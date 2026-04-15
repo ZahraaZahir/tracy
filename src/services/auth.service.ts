@@ -5,15 +5,6 @@ import {ConflictError, UnauthorizedError} from '../errors/errors.js';
 
 export class AuthService {
   private userRepo = new UserRepository();
-  private readonly jwtSecret: string;
-
-  constructor() {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new Error('JWT_SECRET is not defined in environment variables.');
-    }
-    this.jwtSecret = secret;
-  }
 
   async register(email: string, pass: string, username: string) {
     const existingEmail = await this.userRepo.findByIdentifier(email);
@@ -26,7 +17,7 @@ export class AuthService {
     const hash = await argon2.hash(pass);
     const newUser = await this.userRepo.createUser(email, hash, username);
 
-    const token = jwt.sign({userId: newUser.id}, this.jwtSecret, {
+    const token = jwt.sign({userId: newUser.id}, process.env.JWT_SECRET!, {
       expiresIn: '7d',
     });
 
@@ -45,7 +36,7 @@ export class AuthService {
       throw new UnauthorizedError('Invalid credentials');
     }
 
-    const token = jwt.sign({userId: user.id}, this.jwtSecret, {
+    const token = jwt.sign({userId: user.id}, process.env.JWT_SECRET!, {
       expiresIn: '7d',
     });
 
