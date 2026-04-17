@@ -43,20 +43,52 @@ export class WorldService {
       return {success: true, alreadySolved: true, message: 'Already fixed'};
     }
 
+    const save = await this.worldRepo.getWorldState(userId);
+    if (!save) throw new NotFoundError('Save state missing');
+    const inventory = Array.isArray(save.inventory)
+      ? (save.inventory as any[])
+      : [];
+
     const solutions = entity.solutionMap as Record<string, any>;
     const errorMessages = entity.errorMessages as Record<string, any>;
 
     for (const slotId in solutions) {
-      const blockParse = LogicBlockSchema.safeParse(answers[slotId]);
+      const submittedBlock = answers[slotId];
+      console.log(`[DEBUG] Checking slot: ${slotId}`);
 
+      const blockParse = LogicBlockSchema.safeParse(submittedBlock);
       if (!blockParse.success) {
-        return {success: false, wrongSlot: slotId, message: 'Invalid block'};
+        console.log(`[DEBUG] Zod Fail:`, blockParse.error.issues);
+        return {
+          success: false,
+          wrongSlot: slotId,
+          message: 'Invalid block payload: Expected LogicBlock object',
+        };
       }
 
-      const playerValueSnapshot = JSON.stringify(blockParse.data.value);
-      const correctValueSnapshot = JSON.stringify(solutions[slotId]);
+      const playerBlock = blockParse.data;
 
-      if (playerValueSnapshot !== correctValueSnapshot) {
+      const ownsBlock = inventory.some(
+        (b: any) => b.blockId === playerBlock.blockId,
+      );
+
+      if (!ownsBlock) {
+        console.log(`[DEBUG] Ownership Fail. BlockId: ${playerBlock.blockId}`);
+        return {
+          success: false,
+          wrongSlot: slotId,
+          message: 'You do not own this logic block',
+        };
+      }
+
+      console.log(
+        `[DEBUG] Comparing: ${JSON.stringify(playerBlock.value)} vs ${JSON.stringify(solutions[slotId])}`,
+      );
+
+      // 4. Compare primitive values
+      if (
+        JSON.stringify(playerBlock.value) !== JSON.stringify(solutions[slotId])
+      ) {
         return {
           success: false,
           wrongSlot: slotId,
