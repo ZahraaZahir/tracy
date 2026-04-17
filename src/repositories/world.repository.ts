@@ -1,6 +1,5 @@
 import {prisma} from '../lib/prisma.js';
 import {SaveStateData} from '../validators/world.validator.js';
-import {INITIAL_GAME_STATE} from '../config/game.config.js';
 
 export class WorldRepository {
   async saveWorldState(userId: string, saveStateData: SaveStateData) {
@@ -11,19 +10,10 @@ export class WorldRepository {
   }
 
   async getWorldState(userId: string) {
-    const save = await prisma.saveState.findUnique({
+    return await prisma.saveState.findUnique({
       where: {userId},
       include: {fixedGlitches: {select: {id: true}}},
     });
-
-    if (!save) return null;
-
-    return {
-      posX: save.posX,
-      posY: save.posY,
-      mapName: save.mapName,
-      fixedGlitches: save.fixedGlitches.map((g) => g.id),
-    };
   }
 
   async addFixedGlitch(userId: string, entityId: string) {
