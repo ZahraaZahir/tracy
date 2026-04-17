@@ -24,4 +24,22 @@ export class WorldRepository {
       },
     });
   }
+
+  async updateSaveStateCAS(
+    userId: string,
+    data: any,
+    oldVersion: number,
+  ): Promise<boolean> {
+    const result = await prisma.saveState.updateMany({
+      where: {
+        userId,
+        version: oldVersion,
+      },
+      data: {
+        ...data,
+        version: {increment: 1},
+      },
+    });
+    return result.count > 0;
+  }
 }
