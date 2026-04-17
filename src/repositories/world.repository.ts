@@ -16,15 +16,6 @@ export class WorldRepository {
     });
   }
 
-  async addFixedGlitch(userId: string, entityId: string) {
-    return await prisma.saveState.update({
-      where: {userId},
-      data: {
-        fixedGlitches: {connect: {id: entityId}},
-      },
-    });
-  }
-
   async updateSaveStateCAS(
     userId: string,
     data: any,
@@ -41,5 +32,35 @@ export class WorldRepository {
       },
     });
     return result.count > 0;
+  }
+
+  async completePuzzleAtomic(
+    userId: string,
+    entityId: string,
+    newInventory: any,
+    oldVersion: number,
+  ): Promise<boolean> {
+    try {
+      const [updateResult] = await prisma.$transaction([
+        prisma.saveState.updateMany({
+          where: {userId, version: oldVersion},
+          data: {
+            inventory: newInventory,
+            version: {increment: 1},
+          },
+        }),
+        prisma.saveState.update({
+          where: {userId},
+          data: {
+            fixedGlitches: {connect: {id: entityId}},
+          },
+        }),
+      ]);
+
+      return updateResult.count > 0;
+    } catch (error) {
+      console.error('[DATABASE ERROR] Transaction failed:', error);
+      return false;
+    }
   }
 }

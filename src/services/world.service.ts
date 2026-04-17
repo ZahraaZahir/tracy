@@ -1,8 +1,11 @@
 import {WorldRepository} from '../repositories/world.repository.js';
 import {EntityRepository} from '../repositories/entity.repository.js';
 import {saveStateSchema, SaveStateData} from '../validators/world.validator.js';
-import {LogicBlockSchema} from '../validators/inventory.validator.js';
-import {NotFoundError} from '../errors/errors.js';
+import {
+  LogicBlockSchema,
+  LogicBlock,
+} from '../validators/inventory.validator.js';
+import {NotFoundError, UnauthorizedError, AppError} from '../errors/errors.js';
 
 export class WorldService {
   private worldRepo = new WorldRepository();
@@ -43,49 +46,40 @@ export class WorldService {
       return {success: true, alreadySolved: true, message: 'Already fixed'};
     }
 
-    const save = await this.worldRepo.getWorldState(userId);
-    if (!save) throw new NotFoundError('Save state missing');
-    const inventory = Array.isArray(save.inventory)
-      ? (save.inventory as any[])
-      : [];
+    const state = await this.worldRepo.getWorldState(userId);
+    if (!state) throw new NotFoundError('Save state missing');
 
+    const inventory = Array.isArray(state.inventory)
+      ? (state.inventory as LogicBlock[])
+      : [];
     const solutions = entity.solutionMap as Record<string, any>;
     const errorMessages = entity.errorMessages as Record<string, any>;
 
-    for (const slotId in solutions) {
-      const submittedBlock = answers[slotId];
-      console.log(`[DEBUG] Checking slot: ${slotId}`);
+    const usedBlockIds: string[] = [];
 
-      const blockParse = LogicBlockSchema.safeParse(submittedBlock);
+    for (const slotId in solutions) {
+      const submittedBlockRaw = answers[slotId];
+      const blockParse = LogicBlockSchema.safeParse(submittedBlockRaw);
+
       if (!blockParse.success) {
-        console.log(`[DEBUG] Zod Fail:`, blockParse.error.issues);
         return {
           success: false,
           wrongSlot: slotId,
-          message: 'Invalid block payload: Expected LogicBlock object',
+          message: 'Invalid block payload',
         };
       }
 
       const playerBlock = blockParse.data;
 
       const ownsBlock = inventory.some(
-        (b: any) => b.blockId === playerBlock.blockId,
+        (b) => b.blockId === playerBlock.blockId,
       );
-
       if (!ownsBlock) {
-        console.log(`[DEBUG] Ownership Fail. BlockId: ${playerBlock.blockId}`);
-        return {
-          success: false,
-          wrongSlot: slotId,
-          message: 'You do not own this logic block',
-        };
+        throw new UnauthorizedError(
+          `Block ${playerBlock.blockId} not found in inventory.`,
+        );
       }
 
-      console.log(
-        `[DEBUG] Comparing: ${JSON.stringify(playerBlock.value)} vs ${JSON.stringify(solutions[slotId])}`,
-      );
-
-      // 4. Compare primitive values
       if (
         JSON.stringify(playerBlock.value) !== JSON.stringify(solutions[slotId])
       ) {
@@ -95,16 +89,33 @@ export class WorldService {
           message: errorMessages[slotId] || 'Logic mismatch',
         };
       }
+
+      usedBlockIds.push(playerBlock.blockId);
     }
 
-    await this.worldRepo.addFixedGlitch(userId, entityId);
-    const updated = await this.load(userId);
+    const nextInventory = inventory.filter(
+      (b) => !usedBlockIds.includes(b.blockId),
+    );
+
+    const success = await this.worldRepo.completePuzzleAtomic(
+      userId,
+      entityId,
+      nextInventory,
+      state.version,
+    );
+
+    if (!success) {
+      throw new AppError('State conflict detected. Please submit again.', 409);
+    }
+
+    const updatedState = await this.load(userId);
 
     return {
       success: true,
       message: 'Fixed!',
-      fixedGlitches: updated.fixedGlitches,
-      totalEntities: updated.totalEntities,
+      fixedGlitches: updatedState.fixedGlitches,
+      totalEntities: updatedState.totalEntities,
+      inventory: updatedState.inventory,
     };
   }
 }
