@@ -23,11 +23,21 @@ const getWorldService = () => {
 export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
   const {id} = entityParamSchema.parse(req.params);
   const userId = req.user!.userId;
+
   const isFixed = await getWorldService().isEntityFixed(userId, id);
 
-  const result = await getEntityService().getEntityState(id, isFixed);
+  const [entityData, playerState] = await Promise.all([
+    getEntityService().getEntityState(id, isFixed),
+    getWorldService().load(userId),
+  ]);
 
-  res.status(200).json({message: 'Entity state retrieved', data: result});
+  res.status(200).json({
+    message: 'Entity state retrieved',
+    data: {
+      ...entityData,
+      inventory: playerState.inventory || [],
+    },
+  });
 };
 
 export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
