@@ -1,11 +1,8 @@
 import {EntityRepository} from '../repositories/entity.repository.js';
 import {WorldRepository} from '../repositories/world.repository.js';
 import {InventoryService} from './inventory.service.js';
-import {
-  LogicBlockSchema,
-  LogicBlock,
-} from '../validators/inventory.validator.js';
-import {NotFoundError, UnauthorizedError, AppError} from '../errors/errors.js';
+import {ValueMatchStrategy} from './strategies/value-match.strategy.js';
+import {NotFoundError} from '../errors/errors.js';
 
 export class PuzzleService {
   private entityRepo = new EntityRepository();
@@ -23,54 +20,33 @@ export class PuzzleService {
       return {success: true, alreadySolved: true, message: 'Already fixed'};
     }
 
-    const inventory = Array.isArray(state.inventory)
-      ? (state.inventory as LogicBlock[])
-      : [];
-    const solutions = entity.solutionMap as Record<string, any>;
-    const errorMessages = entity.errorMessages as Record<string, any>;
-    const usedBlockIds: string[] = [];
+    const strategy = new ValueMatchStrategy();
+    const result = strategy.validate(
+      answers,
+      entity.solutionMap as Record<string, any>,
+      state.inventory as any[],
+    );
 
-    for (const slotId of Object.keys(solutions)) {
-      const blockParse = LogicBlockSchema.safeParse(answers[slotId]);
-      if (!blockParse.success)
-        return {success: false, wrongSlot: slotId, message: 'Invalid block'};
-
-      const playerBlock = blockParse.data;
-      if (!inventory.some((b) => b.blockId === playerBlock.blockId)) {
-        throw new UnauthorizedError(`Block ${playerBlock.blockId} not owned.`);
-      }
-
-      if (
-        JSON.stringify(playerBlock.value) !== JSON.stringify(solutions[slotId])
-      ) {
-        return {
-          success: false,
-          wrongSlot: slotId,
-          message: errorMessages[slotId] || 'Logic mismatch',
-        };
-      }
-      usedBlockIds.push(playerBlock.blockId);
+    if (!result.correct) {
+      return {
+        success: false,
+        wrongSlot: result.wrongSlot,
+        message: result.message,
+      };
     }
 
-    const success = await this.inventoryService.consumeBlocks(
+    await this.inventoryService.consumeBlocks(
       userId,
-      usedBlockIds,
+      result.usedBlockIds!,
       state.version,
     );
-    if (!success) throw new AppError('State conflict detected. Retry.', 409);
-
     await this.worldRepo.addFixedGlitch(userId, entityId);
 
-    const [updatedState, totalEntities] = await Promise.all([
-      this.worldRepo.getWorldState(userId),
-      this.entityRepo.countAllEntities(),
-    ]);
-
+    const updatedState = await this.worldRepo.getWorldState(userId);
     return {
       success: true,
       message: 'Fixed!',
       fixedGlitches: updatedState!.fixedGlitches.map((g) => g.id),
-      totalEntities,
     };
   }
 }
