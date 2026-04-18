@@ -16,59 +16,27 @@ export class WorldRepository {
     });
   }
 
+  async addFixedGlitch(userId: string, entityId: string) {
+    return await prisma.saveState.update({
+      where: {userId},
+      data: {
+        fixedGlitches: {connect: {id: entityId}},
+      },
+    });
+  }
+
   async updateSaveStateCAS(
     userId: string,
     data: any,
     oldVersion: number,
   ): Promise<boolean> {
     const result = await prisma.saveState.updateMany({
-      where: {
-        userId,
-        version: oldVersion,
-      },
+      where: {userId, version: oldVersion},
       data: {
         ...data,
         version: {increment: 1},
       },
     });
     return result.count > 0;
-  }
-
-  async completePuzzleAtomic(
-    userId: string,
-    entityId: string,
-    newInventory: any,
-    oldVersion: number,
-  ): Promise<boolean> {
-    try {
-      await prisma.$transaction(async (transaction) => {
-        const result = await transaction.saveState.updateMany({
-          where: {userId, version: oldVersion},
-          data: {
-            inventory: newInventory,
-            version: {increment: 1},
-          },
-        });
-
-        if (result.count === 0) {
-          throw new Error('VERSION_CONFLICT');
-        }
-
-        await transaction.saveState.update({
-          where: {userId},
-          data: {
-            fixedGlitches: {connect: {id: entityId}},
-          },
-        });
-      });
-
-      return true;
-    } catch (error: any) {
-      if (error.message === 'VERSION_CONFLICT') {
-        return false;
-      }
-      console.error('[DATABASE ERROR] Transaction failed:', error);
-      throw error;
-    }
   }
 }
