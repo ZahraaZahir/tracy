@@ -2,6 +2,7 @@ import {Response} from 'express';
 import {AuthenticatedRequest} from '../types/auth.types.js';
 import {EntityService} from '../services/entity.service.js';
 import {WorldService} from '../services/world.service.js';
+import {PuzzleService} from '../services/puzzle.service.js';
 import {
   entityParamSchema,
   solveEntitySchema,
@@ -9,6 +10,7 @@ import {
 
 let entityService: EntityService;
 let worldService: WorldService;
+let puzzleService: PuzzleService;
 
 const getEntityService = () => {
   if (!entityService) entityService = new EntityService();
@@ -19,6 +21,8 @@ const getWorldService = () => {
   if (!worldService) worldService = new WorldService();
   return worldService;
 };
+
+const getPuzzleService = () => (puzzleService ||= new PuzzleService());
 
 export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
   const {id} = entityParamSchema.parse(req.params);
@@ -43,9 +47,7 @@ export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
 export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
   const {id} = entityParamSchema.parse(req.params);
   const {answers} = solveEntitySchema.parse(req.body);
-  const result = await getWorldService().solve(req.user!.userId, id, answers);
+  const result = await getPuzzleService().solve(req.user!.userId, id, answers);
 
-  res
-    .status(result.success ? 200 : 400)
-    .json({message: 'Entity state retrieved', data: result});
+  res.status(result.success ? 200 : 400).json({data: result});
 };
