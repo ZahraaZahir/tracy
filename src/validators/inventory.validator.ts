@@ -1,10 +1,27 @@
 import {z} from 'zod';
 
-export const LogicBlockSchema = z.object({
-  blockId: z.uuid(),
-  type: z.enum(['bool', 'int', 'string', 'float']),
-  value: z.union([z.boolean(), z.string(), z.number()]),
-});
+export const LogicBlockSchema = z.discriminatedUnion('type', [
+  z.object({
+    blockId: z.uuid(),
+    type: z.literal('boolean'),
+    value: z.boolean(),
+  }),
+  z.object({
+    blockId: z.uuid(),
+    type: z.literal('int'),
+    value: z.number().int(),
+  }),
+  z.object({
+    blockId: z.uuid(),
+    type: z.literal('float'),
+    value: z.number(),
+  }),
+  z.object({
+    blockId: z.uuid(),
+    type: z.literal('string'),
+    value: z.string(),
+  }),
+]);
 
 export const InventorySchema = z.array(LogicBlockSchema);
 
