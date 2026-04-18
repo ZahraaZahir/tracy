@@ -41,26 +41,34 @@ export class WorldRepository {
     oldVersion: number,
   ): Promise<boolean> {
     try {
-      const [updateResult] = await prisma.$transaction([
-        prisma.saveState.updateMany({
+      await prisma.$transaction(async (transaction) => {
+        const result = await transaction.saveState.updateMany({
           where: {userId, version: oldVersion},
           data: {
             inventory: newInventory,
             version: {increment: 1},
           },
-        }),
-        prisma.saveState.update({
+        });
+
+        if (result.count === 0) {
+          throw new Error('VERSION_CONFLICT');
+        }
+
+        await transaction.saveState.update({
           where: {userId},
           data: {
             fixedGlitches: {connect: {id: entityId}},
           },
-        }),
-      ]);
+        });
+      });
 
-      return updateResult.count > 0;
-    } catch (error) {
+      return true;
+    } catch (error: any) {
+      if (error.message === 'VERSION_CONFLICT') {
+        return false;
+      }
       console.error('[DATABASE ERROR] Transaction failed:', error);
-      return false;
+      throw error;
     }
   }
 }
