@@ -1,6 +1,11 @@
 import {prisma} from '../lib/prisma.js';
 import {SaveStateData} from '../validators/world.validator.js';
 import {LogicBlock} from '../validators/inventory.validator.js';
+import {Prisma} from '@prisma/client';
+
+type SaveStateWithGlitches = Prisma.SaveStateGetPayload<{
+  include: {fixedGlitches: {select: {id: true}}};
+}>;
 
 export class WorldRepository {
   async getWorldState(userId: string) {
@@ -27,49 +32,83 @@ export class WorldRepository {
     });
   }
 
-  async updateSaveStateCAS(
+  async addBlockAtomic(
     userId: string,
-    nextInventory: LogicBlock[],
-    oldVersion: number,
-  ): Promise<boolean> {
-    const result = await prisma.saveState.updateMany({
-      where: {userId, version: oldVersion},
-      data: {
-        inventory: nextInventory,
-        version: {increment: 1},
-      },
+    block: LogicBlock,
+  ): Promise<LogicBlock | null> {
+    return await prisma.$transaction(async (transaction) => {
+      const state = await transaction.saveState.findUnique({where: {userId}});
+      if (!state) return null;
+
+      const nextInventory = [...(state.inventory as LogicBlock[]), block];
+
+      const result = await transaction.saveState.updateMany({
+        where: {userId, version: state.version},
+        data: {inventory: nextInventory, version: {increment: 1}},
+      });
+
+      return result.count > 0 ? block : null;
     });
-    return result.count > 0;
+  }
+
+  async removeBlocksAtomic(
+    userId: string,
+    blockIds: string[],
+  ): Promise<boolean> {
+    return await prisma.$transaction(async (transaction) => {
+      const state = await transaction.saveState.findUnique({where: {userId}});
+      if (!state) return false;
+
+      const nextInventory = (state.inventory as LogicBlock[]).filter(
+        (b) => !blockIds.includes(b.blockId),
+      );
+
+      const result = await transaction.saveState.updateMany({
+        where: {userId, version: state.version},
+        data: {inventory: nextInventory, version: {increment: 1}},
+      });
+
+      return result.count > 0;
+    });
   }
 
   async completePuzzleAtomic(
     userId: string,
     entityId: string,
-    nextInventory: LogicBlock[],
+    blockIds: string[],
     oldVersion: number,
-  ): Promise<boolean> {
-    try {
-      await prisma.$transaction(async (transaction) => {
-        const result = await transaction.saveState.updateMany({
-          where: {userId, version: oldVersion},
-          data: {
-            inventory: nextInventory,
-            version: {increment: 1},
-          },
-        });
+  ): Promise<SaveStateWithGlitches> {
+    return await prisma.$transaction(async (transaction) => {
+      const state = await transaction.saveState.findUnique({where: {userId}});
+      if (!state) throw new Error('NOT_FOUND');
 
-        if (result.count === 0) throw new Error('VERSION_CONFLICT');
+      const currentInventory = state.inventory as LogicBlock[];
+      const nextInventory = currentInventory.filter(
+        (b) => !blockIds.includes(b.blockId),
+      );
 
-        await transaction.saveState.update({
-          where: {userId},
-          data: {fixedGlitches: {connect: {id: entityId}}},
-        });
+      const result = await transaction.saveState.updateMany({
+        where: {userId, version: oldVersion},
+        data: {
+          inventory: nextInventory,
+          version: {increment: 1},
+        },
       });
 
-      return true;
-    } catch (error: any) {
-      if (error.message === 'VERSION_CONFLICT') return false;
-      throw error;
-    }
+      if (result.count === 0) throw new Error('VERSION_CONFLICT');
+
+      await transaction.saveState.update({
+        where: {userId},
+        data: {fixedGlitches: {connect: {id: entityId}}},
+      });
+
+      const updatedState = await transaction.saveState.findUnique({
+        where: {userId},
+        include: {fixedGlitches: {select: {id: true}}},
+      });
+
+      if (!updatedState) throw new Error('NOT_FOUND');
+      return updatedState;
+    });
   }
 }

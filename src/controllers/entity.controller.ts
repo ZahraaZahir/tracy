@@ -14,14 +14,11 @@ import {
 
 const worldRepo = new WorldRepository();
 const entityRepo = new EntityRepository();
-const inventoryService = new InventoryService(worldRepo);
-
-const entityService = new EntityService();
-const worldService = new WorldService();
+const entityService = new EntityService(entityRepo);
+const worldService = new WorldService(worldRepo, entityRepo);
 const puzzleService = new PuzzleService(
   entityRepo,
   worldRepo,
-  inventoryService,
   new ValueMatchStrategy(),
 );
 
@@ -30,7 +27,6 @@ export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user!.userId;
 
   const playerState = await worldService.load(userId);
-
   const isFixed = playerState.fixedGlitches.includes(id);
 
   const entityData = await entityService.getEntityState(id, isFixed);

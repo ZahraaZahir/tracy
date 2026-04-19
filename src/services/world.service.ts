@@ -4,8 +4,10 @@ import {saveStateSchema, SaveStateData} from '../validators/world.validator.js';
 import {NotFoundError} from '../errors/errors.js';
 
 export class WorldService {
-  private worldRepo = new WorldRepository();
-  private entityRepo = new EntityRepository();
+  constructor(
+    private worldRepo: WorldRepository,
+    private entityRepo: EntityRepository,
+  ) {}
 
   async isEntityFixed(userId: string, entityId: string): Promise<boolean> {
     const save = await this.worldRepo.getWorldState(userId);

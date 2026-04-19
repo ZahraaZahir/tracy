@@ -3,9 +3,11 @@ import {AuthenticatedRequest} from '../types/auth.types.js';
 import {WorldService} from '../services/world.service.js';
 import {InventoryService} from '../services/inventory.service.js';
 import {WorldRepository} from '../repositories/world.repository.js';
+import {EntityRepository} from '../repositories/entity.repository.js';
 
 const worldRepo = new WorldRepository();
-const worldService = new WorldService();
+const entityRepo = new EntityRepository();
+const worldService = new WorldService(worldRepo, entityRepo);
 const inventoryService = new InventoryService(worldRepo);
 
 export const saveState = async (req: AuthenticatedRequest, res: Response) => {

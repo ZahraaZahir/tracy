@@ -1,6 +1,5 @@
 import {EntityRepository} from '../repositories/entity.repository.js';
 import {WorldRepository} from '../repositories/world.repository.js';
-import {InventoryService} from './inventory.service.js';
 import {
   InventorySchema,
   LogicBlock,
@@ -12,24 +11,23 @@ export class PuzzleService {
   constructor(
     private entityRepo: EntityRepository,
     private worldRepo: WorldRepository,
-    private inventoryService: InventoryService,
     private validator: PuzzleStrategy,
   ) {}
 
   async solve(userId: string, entityId: string, answers: Record<string, any>) {
-    const entity = await this.entityRepo.getEntityById(entityId);
-    if (!entity) throw new NotFoundError(`NPC ${entityId} not found`);
+    const [entity, state] = await Promise.all([
+      this.entityRepo.getEntityById(entityId),
+      this.worldRepo.getWorldState(userId),
+    ]);
 
-    const state = await this.worldRepo.getWorldState(userId);
+    if (!entity) throw new NotFoundError(`NPC ${entityId} not found`);
     if (!state) throw new NotFoundError('Save state missing');
 
     if (state.fixedGlitches.some((g) => g.id === entityId)) {
       return {success: true, alreadySolved: true, message: 'Already fixed'};
     }
 
-    const inventory = InventorySchema.parse(
-      Array.isArray(state.inventory) ? state.inventory : [],
-    );
+    const inventory = InventorySchema.parse(state.inventory || []);
 
     const result = this.validator.validate(
       answers,
@@ -45,25 +43,25 @@ export class PuzzleService {
       };
     }
 
-    const success = await this.worldRepo.completePuzzleAtomic(
-      userId,
-      entityId,
-      inventory.filter((b) => !result.usedBlockIds!.includes(b.blockId)),
-      state.version,
-    );
+    try {
+      const updatedState = await this.worldRepo.completePuzzleAtomic(
+        userId,
+        entityId,
+        result.usedBlockIds!,
+        state.version,
+      );
 
-    if (!success) throw new AppError('State conflict detected. Retry.', 409);
-
-    const [updatedState, totalEntities] = await Promise.all([
-      this.worldRepo.getWorldState(userId),
-      this.entityRepo.countAllEntities(),
-    ]);
-
-    return {
-      success: true,
-      message: 'Fixed!',
-      fixedGlitches: updatedState!.fixedGlitches.map((g) => g.id),
-      totalEntities,
-    };
+      return {
+        success: true,
+        message: 'Fixed!',
+        fixedGlitches: updatedState.fixedGlitches.map((g) => g.id),
+        totalEntities: await this.entityRepo.countAllEntities(),
+      };
+    } catch (error: any) {
+      if (error.message === 'VERSION_CONFLICT') {
+        throw new AppError('State conflict detected. Retry.', 409);
+      }
+      throw error;
+    }
   }
 }

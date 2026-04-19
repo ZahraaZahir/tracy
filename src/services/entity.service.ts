@@ -4,7 +4,8 @@ import {EntityResponse} from '../types/entity.types.js';
 import {tokenizeCodeTemplate} from '../lexer/lexer.js';
 
 export class EntityService {
-  private entityRepo = new EntityRepository();
+  constructor(private entityRepo: EntityRepository) {}
+
   async getEntityState(
     entityId: string,
     isFixed: boolean,
