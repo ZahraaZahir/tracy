@@ -82,32 +82,23 @@ export class WorldRepository {
       const state = await transaction.saveState.findUnique({where: {userId}});
       if (!state) throw new Error('NOT_FOUND');
 
-      const currentInventory = state.inventory as LogicBlock[];
-      const nextInventory = currentInventory.filter(
+      const nextInventory = (state.inventory as LogicBlock[]).filter(
         (b) => !blockIds.includes(b.blockId),
       );
 
       const result = await transaction.saveState.updateMany({
         where: {userId, version: oldVersion},
-        data: {
-          inventory: nextInventory,
-          version: {increment: 1},
-        },
+        data: {inventory: nextInventory, version: {increment: 1}},
       });
 
       if (result.count === 0) throw new Error('VERSION_CONFLICT');
 
-      await transaction.saveState.update({
+      const updatedState = await transaction.saveState.update({
         where: {userId},
         data: {fixedGlitches: {connect: {id: entityId}}},
-      });
-
-      const updatedState = await transaction.saveState.findUnique({
-        where: {userId},
         include: {fixedGlitches: {select: {id: true}}},
       });
 
-      if (!updatedState) throw new Error('NOT_FOUND');
       return updatedState;
     });
   }
