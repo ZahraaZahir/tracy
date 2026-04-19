@@ -51,7 +51,7 @@ export class PuzzleService {
       const updatedState = await this.worldRepo.completePuzzleAtomic(
         userId,
         entityId,
-        result.usedBlockIds!,
+        result.usedBlockIds,
         state.version,
       );
 

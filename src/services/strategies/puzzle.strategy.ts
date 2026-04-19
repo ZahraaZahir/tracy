@@ -1,11 +1,8 @@
 import {LogicBlock} from '../../validators/inventory.validator.js';
 
-export interface PuzzleResult {
-  correct: boolean;
-  wrongSlot?: string;
-  message?: string;
-  usedBlockIds?: string[];
-}
+export type PuzzleResult =
+  | {correct: true; usedBlockIds: string[]}
+  | {correct: false; wrongSlot: string; message: string};
 
 export interface PuzzleStrategy {
   validate(

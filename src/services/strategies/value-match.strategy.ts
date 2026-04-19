@@ -19,7 +19,6 @@ export class ValueMatchStrategy implements PuzzleStrategy {
         return {correct: false, wrongSlot: slotId, message: 'Invalid block'};
 
       const playerBlock = blockParse.data;
-
       const inventoryIndex = availableInventory.findIndex(
         (b) => b.blockId === playerBlock.blockId,
       );
