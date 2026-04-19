@@ -6,7 +6,6 @@ import {PuzzleService} from '../services/puzzle.service.js';
 import {ValueMatchStrategy} from '../services/strategies/value-match.strategy.js';
 import {EntityRepository} from '../repositories/entity.repository.js';
 import {WorldRepository} from '../repositories/world.repository.js';
-import {InventoryService} from '../services/inventory.service.js';
 import {
   entityParamSchema,
   solveEntitySchema,
