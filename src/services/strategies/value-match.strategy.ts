@@ -6,8 +6,8 @@ import {PuzzleStrategy, PuzzleResult} from './puzzle.strategy.js';
 
 export class ValueMatchStrategy implements PuzzleStrategy {
   validate(
-    answers: Record<string, any>,
-    solutions: Record<string, any>,
+    answers: Record<string, LogicBlock>,
+    solutions: Record<string, LogicBlock>,
     inventory: LogicBlock[],
   ): PuzzleResult {
     const usedBlockIds: string[] = [];
