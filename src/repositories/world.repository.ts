@@ -3,17 +3,27 @@ import {SaveStateData} from '../validators/world.validator.js';
 import {LogicBlock} from '../validators/inventory.validator.js';
 
 export class WorldRepository {
-  async saveWorldState(userId: string, saveStateData: SaveStateData) {
-    return await prisma.saveState.update({
-      where: {userId},
-      data: saveStateData,
-    });
-  }
-
   async getWorldState(userId: string) {
     return await prisma.saveState.findUnique({
       where: {userId},
       include: {fixedGlitches: {select: {id: true}}},
+    });
+  }
+
+  async saveWorldState(
+    userId: string,
+    saveStateData: SaveStateData,
+    version?: number,
+  ) {
+    if (version !== undefined) {
+      return await prisma.saveState.updateMany({
+        where: {userId, version: version},
+        data: {...saveStateData, version: {increment: 1}},
+      });
+    }
+    return await prisma.saveState.update({
+      where: {userId},
+      data: saveStateData,
     });
   }
 
