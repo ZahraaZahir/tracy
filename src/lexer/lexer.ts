@@ -1,4 +1,4 @@
-import {CodeLine} from '../types/lexer.types.js';
+import {CodeLine, CodeToken} from '../types/lexer.types.js';
 import {SYNTAX_CONFIG} from '../config/syntax.config.js';
 
 export const tokenizeCodeTemplate = (template: string): CodeLine[] => {
@@ -8,8 +8,10 @@ export const tokenizeCodeTemplate = (template: string): CodeLine[] => {
 
   const flushBuffer = () => {
     if (buffer.length === 0) return;
-    const type = SYNTAX_CONFIG.keywords.includes(buffer) ? 'keyword' : 'text';
-    currentLine.push({type, content: buffer});
+    const token: CodeToken = SYNTAX_CONFIG.keywords.includes(buffer)
+      ? {type: 'keyword', content: buffer}
+      : {type: 'text', content: buffer};
+    currentLine.push(token);
     buffer = '';
   };
 
@@ -36,7 +38,7 @@ export const tokenizeCodeTemplate = (template: string): CodeLine[] => {
       currentLine.push({
         type: 'slot',
         id: slotId,
-        currentValue: initialValue || null,
+        currentValue: initialValue ?? null,
       });
 
       i = endIndex + 2;
