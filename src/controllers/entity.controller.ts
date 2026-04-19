@@ -3,37 +3,37 @@ import {AuthenticatedRequest} from '../types/auth.types.js';
 import {EntityService} from '../services/entity.service.js';
 import {WorldService} from '../services/world.service.js';
 import {PuzzleService} from '../services/puzzle.service.js';
+import {ValueMatchStrategy} from '../services/strategies/value-match.strategy.js';
+import {EntityRepository} from '../repositories/entity.repository.js';
+import {WorldRepository} from '../repositories/world.repository.js';
+import {InventoryService} from '../services/inventory.service.js';
 import {
   entityParamSchema,
   solveEntitySchema,
 } from '../validators/entity.validator.js';
 
-let entityService: EntityService;
-let worldService: WorldService;
-let puzzleService: PuzzleService;
+const worldRepo = new WorldRepository();
+const entityRepo = new EntityRepository();
+const inventoryService = new InventoryService(worldRepo);
 
-const getEntityService = () => {
-  if (!entityService) entityService = new EntityService();
-  return entityService;
-};
-
-const getWorldService = () => {
-  if (!worldService) worldService = new WorldService();
-  return worldService;
-};
-
-const getPuzzleService = () => (puzzleService ||= new PuzzleService());
+const entityService = new EntityService();
+const worldService = new WorldService();
+const puzzleService = new PuzzleService(
+  entityRepo,
+  worldRepo,
+  inventoryService,
+  new ValueMatchStrategy(),
+);
 
 export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
   const {id} = entityParamSchema.parse(req.params);
   const userId = req.user!.userId;
 
-  const isFixed = await getWorldService().isEntityFixed(userId, id);
+  const playerState = await worldService.load(userId);
 
-  const [entityData, playerState] = await Promise.all([
-    getEntityService().getEntityState(id, isFixed),
-    getWorldService().load(userId),
-  ]);
+  const isFixed = playerState.fixedGlitches.includes(id);
+
+  const entityData = await entityService.getEntityState(id, isFixed);
 
   res.status(200).json({
     message: 'Entity state retrieved',
@@ -47,7 +47,7 @@ export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
 export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
   const {id} = entityParamSchema.parse(req.params);
   const {answers} = solveEntitySchema.parse(req.body);
-  const result = await getPuzzleService().solve(req.user!.userId, id, answers);
+  const result = await puzzleService.solve(req.user!.userId, id, answers);
 
   res.status(result.success ? 200 : 400).json({data: result});
 };

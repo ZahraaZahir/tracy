@@ -1,13 +1,17 @@
-import {LogicBlockSchema} from '../../validators/inventory.validator.js';
+import {
+  LogicBlockSchema,
+  LogicBlock,
+} from '../../validators/inventory.validator.js';
 import {PuzzleStrategy, PuzzleResult} from './puzzle.strategy.js';
 
 export class ValueMatchStrategy implements PuzzleStrategy {
   validate(
     answers: Record<string, any>,
     solutions: Record<string, any>,
-    inventory: any[],
+    inventory: LogicBlock[],
   ): PuzzleResult {
     const usedBlockIds: string[] = [];
+    const availableInventory = [...inventory];
 
     for (const slotId of Object.keys(solutions)) {
       const blockParse = LogicBlockSchema.safeParse(answers[slotId]);
@@ -15,20 +19,31 @@ export class ValueMatchStrategy implements PuzzleStrategy {
         return {correct: false, wrongSlot: slotId, message: 'Invalid block'};
 
       const playerBlock = blockParse.data;
-      if (!inventory.some((b) => b.blockId === playerBlock.blockId)) {
+
+      const inventoryIndex = availableInventory.findIndex(
+        (b) => b.blockId === playerBlock.blockId,
+      );
+
+      if (inventoryIndex === -1) {
         return {
           correct: false,
-          message: `Block ${playerBlock.blockId} not owned.`,
+          wrongSlot: slotId,
+          message: `Block ${playerBlock.blockId} not owned or already used.`,
         };
       }
 
+      const actualBlock = availableInventory.splice(inventoryIndex, 1)[0];
+
       if (
-        JSON.stringify(playerBlock.value) !== JSON.stringify(solutions[slotId])
+        JSON.stringify(actualBlock.value) !==
+        JSON.stringify(solutions[slotId].value)
       ) {
         return {correct: false, wrongSlot: slotId, message: 'Logic mismatch'};
       }
-      usedBlockIds.push(playerBlock.blockId);
+
+      usedBlockIds.push(actualBlock.blockId);
     }
+
     return {correct: true, usedBlockIds};
   }
 }
