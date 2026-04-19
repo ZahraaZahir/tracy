@@ -9,12 +9,6 @@ export class WorldService {
     private entityRepo: EntityRepository,
   ) {}
 
-  async isEntityFixed(userId: string, entityId: string): Promise<boolean> {
-    const save = await this.worldRepo.getWorldState(userId);
-    if (!save) return false;
-    return save.fixedGlitches.map((g) => g.id).includes(entityId);
-  }
-
   async save(userId: string, rawData: SaveStateData) {
     const validData = saveStateSchema.parse(rawData);
     await this.worldRepo.saveWorldState(userId, validData);
