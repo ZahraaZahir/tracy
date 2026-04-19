@@ -14,7 +14,11 @@ export class PuzzleService {
     private validator: PuzzleStrategy,
   ) {}
 
-  async solve(userId: string, entityId: string, answers: Record<string, any>) {
+  async solve(
+    userId: string,
+    entityId: string,
+    answers: Record<string, LogicBlock>,
+  ) {
     const [entity, state] = await Promise.all([
       this.entityRepo.getEntityById(entityId),
       this.worldRepo.getWorldState(userId),
@@ -57,8 +61,8 @@ export class PuzzleService {
         fixedGlitches: updatedState.fixedGlitches.map((g) => g.id),
         totalEntities: await this.entityRepo.countAllEntities(),
       };
-    } catch (error: any) {
-      if (error.message === 'VERSION_CONFLICT') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'VERSION_CONFLICT') {
         throw new AppError('State conflict detected. Retry.', 409);
       }
       throw error;
