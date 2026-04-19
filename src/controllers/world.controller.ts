@@ -4,6 +4,7 @@ import {WorldService} from '../services/world.service.js';
 import {InventoryService} from '../services/inventory.service.js';
 import {WorldRepository} from '../repositories/world.repository.js';
 import {EntityRepository} from '../repositories/entity.repository.js';
+import {saveStateSchema} from '../validators/world.validator.js';
 
 const worldRepo = new WorldRepository();
 const entityRepo = new EntityRepository();
@@ -11,7 +12,8 @@ const worldService = new WorldService(worldRepo, entityRepo);
 const inventoryService = new InventoryService(worldRepo);
 
 export const saveState = async (req: AuthenticatedRequest, res: Response) => {
-  const result = await worldService.save(req.user!.userId, req.body);
+  const data = saveStateSchema.parse(req.body);
+  const result = await worldService.save(req.user!.userId, data);
   res.status(200).json({message: 'Saved', data: result});
 };
 

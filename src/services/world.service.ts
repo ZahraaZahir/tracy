@@ -1,6 +1,6 @@
 import {WorldRepository} from '../repositories/world.repository.js';
 import {EntityRepository} from '../repositories/entity.repository.js';
-import {saveStateSchema, SaveStateData} from '../validators/world.validator.js';
+import {SaveStateData} from '../validators/world.validator.js';
 import {NotFoundError} from '../errors/errors.js';
 
 export class WorldService {
@@ -9,9 +9,8 @@ export class WorldService {
     private entityRepo: EntityRepository,
   ) {}
 
-  async save(userId: string, rawData: SaveStateData) {
-    const validData = saveStateSchema.parse(rawData);
-    await this.worldRepo.saveWorldState(userId, validData);
+  async save(userId: string, data: SaveStateData) {
+    await this.worldRepo.saveWorldState(userId, data);
     return await this.load(userId);
   }
 
