@@ -10,8 +10,7 @@ export class WorldService {
   ) {}
 
   async save(userId: string, data: SaveStateData) {
-    await this.worldRepo.saveWorldState(userId, data);
-    return await this.load(userId);
+    return await this.worldRepo.saveWorldState(userId, data);
   }
 
   async load(userId: string) {

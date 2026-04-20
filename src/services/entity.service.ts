@@ -1,7 +1,6 @@
 import {EntityRepository} from '../repositories/entity.repository.js';
 import {NotFoundError} from '../errors/errors.js';
 import {EntityResponse} from '../types/entity.types.js';
-import {LogicBlock} from '../validators/inventory.validator.js';
 import {tokenizeCodeTemplate} from '../lexer/lexer.js';
 
 export class EntityService {
@@ -17,18 +16,12 @@ export class EntityService {
       throw new NotFoundError(`NPC with ID ${entityId} not found.`);
     }
 
-    const tokenizedLines = tokenizeCodeTemplate(entity.templateCode);
-
     return {
       id: entityId,
       isFixed,
-      lines: tokenizedLines,
-      solutionMap: isFixed
-        ? (entity.solutionMap as Record<string, LogicBlock>)
-        : null,
-      errorMessages: isFixed
-        ? (entity.errorMessages as Record<string, string>)
-        : null,
+      lines: tokenizeCodeTemplate(entity.templateCode),
+      solutionMap: isFixed ? entity.solutionMap : null,
+      errorMessages: isFixed ? entity.errorMessages : null,
     };
   }
 }

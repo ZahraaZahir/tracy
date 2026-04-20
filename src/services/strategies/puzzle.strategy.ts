@@ -1,4 +1,7 @@
-import {LogicBlock} from '../../validators/inventory.validator.js';
+import {
+  LogicBlock,
+  SolutionValue,
+} from '../../validators/inventory.validator.js';
 
 export type PuzzleResult =
   | {correct: true; usedBlockIds: string[]}
@@ -7,7 +10,7 @@ export type PuzzleResult =
 export interface PuzzleStrategy {
   validate(
     answers: Record<string, LogicBlock>,
-    solutions: Record<string, LogicBlock>,
+    solutions: Record<string, SolutionValue>,
     inventory: LogicBlock[],
   ): PuzzleResult;
 }

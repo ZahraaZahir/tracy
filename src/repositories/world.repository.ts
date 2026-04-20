@@ -1,6 +1,9 @@
 import {prisma} from '../lib/prisma.js';
 import {SaveStateData} from '../validators/world.validator.js';
-import {LogicBlock} from '../validators/inventory.validator.js';
+import {
+  LogicBlock,
+  InventorySchema,
+} from '../validators/inventory.validator.js';
 import {Prisma} from '@prisma/client';
 
 type SaveStateWithGlitches = Prisma.SaveStateGetPayload<{
@@ -15,17 +18,7 @@ export class WorldRepository {
     });
   }
 
-  async saveWorldState(
-    userId: string,
-    saveStateData: SaveStateData,
-    version?: number,
-  ) {
-    if (version !== undefined) {
-      return await prisma.saveState.updateMany({
-        where: {userId, version: version},
-        data: {...saveStateData, version: {increment: 1}},
-      });
-    }
+  async saveWorldState(userId: string, saveStateData: SaveStateData) {
     return await prisma.saveState.update({
       where: {userId},
       data: saveStateData,
@@ -40,7 +33,9 @@ export class WorldRepository {
       const state = await transaction.saveState.findUnique({where: {userId}});
       if (!state) return null;
 
-      const nextInventory = [...(state.inventory as LogicBlock[]), block];
+      const parsed = InventorySchema.safeParse(state.inventory);
+      const currentInventory = parsed.success ? parsed.data : [];
+      const nextInventory = [...currentInventory, block];
 
       const result = await transaction.saveState.updateMany({
         where: {userId, version: state.version},
@@ -59,7 +54,10 @@ export class WorldRepository {
       const state = await transaction.saveState.findUnique({where: {userId}});
       if (!state) return false;
 
-      const nextInventory = (state.inventory as LogicBlock[]).filter(
+      const parsed = InventorySchema.safeParse(state.inventory);
+      const currentInventory = parsed.success ? parsed.data : [];
+
+      const nextInventory = currentInventory.filter(
         (b) => !blockIds.includes(b.blockId),
       );
 
@@ -82,13 +80,19 @@ export class WorldRepository {
       const state = await transaction.saveState.findUnique({where: {userId}});
       if (!state) throw new Error('NOT_FOUND');
 
-      const nextInventory = (state.inventory as LogicBlock[]).filter(
+      const parsed = InventorySchema.safeParse(state.inventory);
+      const currentInventory = parsed.success ? parsed.data : [];
+
+      const nextInventory = currentInventory.filter(
         (b) => !blockIds.includes(b.blockId),
       );
 
       const result = await transaction.saveState.updateMany({
         where: {userId, version: oldVersion},
-        data: {inventory: nextInventory, version: {increment: 1}},
+        data: {
+          inventory: nextInventory,
+          version: {increment: 1},
+        },
       });
 
       if (result.count === 0) throw new Error('VERSION_CONFLICT');

@@ -5,7 +5,7 @@ import {
   LogicBlock,
 } from '../validators/inventory.validator.js';
 import {PuzzleStrategy} from './strategies/puzzle.strategy.js';
-import {NotFoundError, AppError} from '../errors/errors.js';
+import {NotFoundError, AppError, RepositoryError} from '../errors/errors.js';
 
 export class PuzzleService {
   constructor(
@@ -33,9 +33,13 @@ export class PuzzleService {
 
     const inventory = InventorySchema.parse(state.inventory || []);
 
+    if (!entity.solutionMap) {
+      throw new NotFoundError(`NPC ${entityId} has no solution defined`);
+    }
+
     const result = this.validator.validate(
       answers,
-      entity.solutionMap as Record<string, LogicBlock>,
+      entity.solutionMap,
       inventory,
     );
 
@@ -62,7 +66,10 @@ export class PuzzleService {
         totalEntities: await this.entityRepo.countAllEntities(),
       };
     } catch (error: unknown) {
-      if (error instanceof Error && error.message === 'VERSION_CONFLICT') {
+      if (
+        error instanceof RepositoryError &&
+        error.code === 'VERSION_CONFLICT'
+      ) {
         throw new AppError('State conflict detected. Retry.', 409);
       }
       throw error;

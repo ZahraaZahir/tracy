@@ -11,17 +11,26 @@ import {
   solveEntitySchema,
 } from '../validators/entity.validator.js';
 
-const worldRepo = new WorldRepository();
-const entityRepo = new EntityRepository();
-const entityService = new EntityService(entityRepo);
-const worldService = new WorldService(worldRepo, entityRepo);
-const puzzleService = new PuzzleService(
-  entityRepo,
-  worldRepo,
-  new ValueMatchStrategy(),
-);
+let entityService: EntityService;
+let worldService: WorldService;
+let puzzleService: PuzzleService;
+
+const initServices = () => {
+  if (!entityService) {
+    const worldRepo = new WorldRepository();
+    const entityRepo = new EntityRepository();
+    entityService = new EntityService(entityRepo);
+    worldService = new WorldService(worldRepo, entityRepo);
+    puzzleService = new PuzzleService(
+      entityRepo,
+      worldRepo,
+      new ValueMatchStrategy(),
+    );
+  }
+};
 
 export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
+  initServices();
   const {id} = entityParamSchema.parse(req.params);
   const userId = req.user!.userId;
 
@@ -40,9 +49,14 @@ export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
+  initServices();
   const {id} = entityParamSchema.parse(req.params);
   const {answers} = solveEntitySchema.parse(req.body);
+
   const result = await puzzleService.solve(req.user!.userId, id, answers);
 
-  res.status(result.success ? 200 : 400).json({data: result});
+  res.status(result.success ? 200 : 400).json({
+    message: result.message,
+    data: result,
+  });
 };
