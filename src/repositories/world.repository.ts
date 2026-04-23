@@ -1,8 +1,23 @@
 import {prisma} from '../lib/prisma.js';
 import {SaveStateData} from '../validators/world.validator.js';
-import {INITIAL_GAME_STATE} from '../config/game.config.js';
+import {
+  LogicBlock,
+  InventorySchema,
+} from '../validators/inventory.validator.js';
+import {Prisma} from '@prisma/client';
+
+type SaveStateWithGlitches = Prisma.SaveStateGetPayload<{
+  include: {fixedGlitches: {select: {id: true}}};
+}>;
 
 export class WorldRepository {
+  async getWorldState(userId: string) {
+    return await prisma.saveState.findUnique({
+      where: {userId},
+      include: {fixedGlitches: {select: {id: true}}},
+    });
+  }
+
   async saveWorldState(userId: string, saveStateData: SaveStateData) {
     return await prisma.saveState.update({
       where: {userId},
@@ -10,28 +25,85 @@ export class WorldRepository {
     });
   }
 
-  async getWorldState(userId: string) {
-    const save = await prisma.saveState.findUnique({
-      where: {userId},
-      include: {fixedGlitches: {select: {id: true}}},
+  async addBlockAtomic(
+    userId: string,
+    block: LogicBlock,
+  ): Promise<LogicBlock | null> {
+    return await prisma.$transaction(async (transaction) => {
+      const state = await transaction.saveState.findUnique({where: {userId}});
+      if (!state) return null;
+
+      const parsed = InventorySchema.safeParse(state.inventory);
+      const currentInventory = parsed.success ? parsed.data : [];
+      const nextInventory = [...currentInventory, block];
+
+      const result = await transaction.saveState.updateMany({
+        where: {userId, version: state.version},
+        data: {inventory: nextInventory, version: {increment: 1}},
+      });
+
+      return result.count > 0 ? block : null;
     });
-
-    if (!save) return null;
-
-    return {
-      posX: save.posX,
-      posY: save.posY,
-      mapName: save.mapName,
-      fixedGlitches: save.fixedGlitches.map((g) => g.id),
-    };
   }
 
-  async addFixedGlitch(userId: string, entityId: string) {
-    return await prisma.saveState.update({
-      where: {userId},
-      data: {
-        fixedGlitches: {connect: {id: entityId}},
-      },
+  async removeBlocksAtomic(
+    userId: string,
+    blockIds: string[],
+  ): Promise<boolean> {
+    return await prisma.$transaction(async (transaction) => {
+      const state = await transaction.saveState.findUnique({where: {userId}});
+      if (!state) return false;
+
+      const parsed = InventorySchema.safeParse(state.inventory);
+      const currentInventory = parsed.success ? parsed.data : [];
+
+      const nextInventory = currentInventory.filter(
+        (b) => !blockIds.includes(b.blockId),
+      );
+
+      const result = await transaction.saveState.updateMany({
+        where: {userId, version: state.version},
+        data: {inventory: nextInventory, version: {increment: 1}},
+      });
+
+      return result.count > 0;
+    });
+  }
+
+  async completePuzzleAtomic(
+    userId: string,
+    entityId: string,
+    blockIds: string[],
+    oldVersion: number,
+  ): Promise<SaveStateWithGlitches> {
+    return await prisma.$transaction(async (transaction) => {
+      const state = await transaction.saveState.findUnique({where: {userId}});
+      if (!state) throw new Error('NOT_FOUND');
+
+      const parsed = InventorySchema.safeParse(state.inventory);
+      const currentInventory = parsed.success ? parsed.data : [];
+
+      const nextInventory = currentInventory.filter(
+        (b) => !blockIds.includes(b.blockId),
+      );
+
+      const result = await transaction.saveState.updateMany({
+        where: {userId, version: oldVersion},
+        data: {
+          inventory: nextInventory,
+          version: {increment: 1},
+        },
+      });
+
+      if (result.count === 0) throw new Error('VERSION_CONFLICT');
+
+      const updatedState = await transaction.saveState.update({
+        where: {userId},
+        data: {fixedGlitches: {connect: {id: entityId}}},
+        include: {fixedGlitches: {select: {id: true}}},
+      });
+
+      return updatedState;
     });
   }
 }

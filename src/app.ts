@@ -4,7 +4,6 @@ import express, {Request, Response} from 'express';
 import authRoutes from './routes/auth.routes.js';
 import worldRoutes from './routes/world.routes.js';
 import entityRoutes from './routes/entity.routes.js';
-import {prisma} from './lib/prisma.js';
 import {errorHandler} from './middleware/error.middleware.js';
 
 const PORT = 3050;
@@ -25,16 +24,8 @@ app.get('/status', (req: Request, res: Response) => {
   });
 });
 
-app.get('/', async (req: Request, res: Response) => {
-  try {
-    res.send(
-      `<h1>Tracy Backend is Running</h1><p>Database connected successfully.</p>`,
-    );
-  } catch (error) {
-    res
-      .status(500)
-      .send(`<h1>Tracy Backend is Running</h1><p>Database Error: ${error}</p>`);
-  }
+app.get('/', (req: Request, res: Response) => {
+  res.send(`<h1>Tracy Backend is Running</h1>`);
 });
 
 app.use(errorHandler);

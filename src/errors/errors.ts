@@ -27,3 +27,10 @@ export class ConflictError extends AppError {
     super(message, 409);
   }
 }
+
+export class RepositoryError extends Error {
+  constructor(public readonly code: 'NOT_FOUND' | 'VERSION_CONFLICT') {
+    super(code);
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}

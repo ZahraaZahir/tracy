@@ -2,6 +2,10 @@ import {Response} from 'express';
 import {AuthenticatedRequest} from '../types/auth.types.js';
 import {EntityService} from '../services/entity.service.js';
 import {WorldService} from '../services/world.service.js';
+import {PuzzleService} from '../services/puzzle.service.js';
+import {ValueMatchStrategy} from '../services/strategies/value-match.strategy.js';
+import {EntityRepository} from '../repositories/entity.repository.js';
+import {WorldRepository} from '../repositories/world.repository.js';
 import {
   entityParamSchema,
   solveEntitySchema,
@@ -9,33 +13,50 @@ import {
 
 let entityService: EntityService;
 let worldService: WorldService;
+let puzzleService: PuzzleService;
 
-const getEntityService = () => {
-  if (!entityService) entityService = new EntityService();
-  return entityService;
-};
-
-const getWorldService = () => {
-  if (!worldService) worldService = new WorldService();
-  return worldService;
+const initServices = () => {
+  if (!entityService) {
+    const worldRepo = new WorldRepository();
+    const entityRepo = new EntityRepository();
+    entityService = new EntityService(entityRepo);
+    worldService = new WorldService(worldRepo, entityRepo);
+    puzzleService = new PuzzleService(
+      entityRepo,
+      worldRepo,
+      new ValueMatchStrategy(),
+    );
+  }
 };
 
 export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
+  initServices();
   const {id} = entityParamSchema.parse(req.params);
   const userId = req.user!.userId;
-  const isFixed = await getWorldService().isEntityFixed(userId, id);
 
-  const result = await getEntityService().getEntityState(id, isFixed);
+  const playerState = await worldService.load(userId);
+  const isFixed = playerState.fixedGlitches.includes(id);
 
-  res.status(200).json({message: 'Entity state retrieved', data: result});
+  const entityData = await entityService.getEntityState(id, isFixed);
+
+  res.status(200).json({
+    message: 'Entity state retrieved',
+    data: {
+      ...entityData,
+      inventory: playerState.inventory || [],
+    },
+  });
 };
 
 export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
+  initServices();
   const {id} = entityParamSchema.parse(req.params);
   const {answers} = solveEntitySchema.parse(req.body);
-  const result = await getWorldService().solve(req.user!.userId, id, answers);
 
-  res
-    .status(result.success ? 200 : 400)
-    .json({message: 'Entity state retrieved', data: result});
+  const result = await puzzleService.solve(req.user!.userId, id, answers);
+
+  res.status(result.success ? 200 : 400).json({
+    message: result.message,
+    data: result,
+  });
 };

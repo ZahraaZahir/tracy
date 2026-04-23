@@ -4,7 +4,8 @@ import {EntityResponse} from '../types/entity.types.js';
 import {tokenizeCodeTemplate} from '../lexer/lexer.js';
 
 export class EntityService {
-  private entityRepo = new EntityRepository();
+  constructor(private entityRepo: EntityRepository) {}
+
   async getEntityState(
     entityId: string,
     isFixed: boolean,
@@ -14,16 +15,13 @@ export class EntityService {
     if (!entity) {
       throw new NotFoundError(`NPC with ID ${entityId} not found.`);
     }
-    const tokenizedLines = tokenizeCodeTemplate(entity.templateCode);
 
     return {
       id: entityId,
       isFixed,
-      lines: tokenizedLines,
-      solutionMap: isFixed ? (entity.solutionMap as Record<string, any>) : null,
-      errorMessages: isFixed
-        ? (entity.errorMessages as Record<string, any>)
-        : null,
+      lines: tokenizeCodeTemplate(entity.templateCode),
+      solutionMap: isFixed ? entity.solutionMap : null,
+      errorMessages: isFixed ? entity.errorMessages : null,
     };
   }
 }

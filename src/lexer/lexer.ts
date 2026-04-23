@@ -1,4 +1,4 @@
-import {CodeLine} from '../types/lexer.types.js';
+import {CodeLine, CodeToken} from '../types/lexer.types.js';
 import {SYNTAX_CONFIG} from '../config/syntax.config.js';
 
 export const tokenizeCodeTemplate = (template: string): CodeLine[] => {
@@ -8,20 +8,16 @@ export const tokenizeCodeTemplate = (template: string): CodeLine[] => {
 
   const flushBuffer = () => {
     if (buffer.length === 0) return;
-
-    const type = SYNTAX_CONFIG.keywords.includes(buffer) ? 'keyword' : 'text';
-
-    currentLine.push({
-      type: type,
-      content: buffer,
-    });
+    const token: CodeToken = SYNTAX_CONFIG.keywords.includes(buffer)
+      ? {type: 'keyword', content: buffer}
+      : {type: 'text', content: buffer};
+    currentLine.push(token);
     buffer = '';
   };
 
   let i = 0;
   while (i < template.length) {
     const char = template[i];
-    const nextChar = template[i + 1];
 
     if (char === '\n') {
       flushBuffer();
@@ -31,39 +27,31 @@ export const tokenizeCodeTemplate = (template: string): CodeLine[] => {
       continue;
     }
 
-    if (char === '{' && nextChar === '{') {
+    if (template.slice(i, i + 2) === '{{') {
       flushBuffer();
-      i += 2;
-      let rawSlot = '';
-      while (
-        i < template.length &&
-        !(template[i] === '}' && template[i + 1] === '}')
-      ) {
-        rawSlot += template[i];
-        i++;
-      }
+      const endIndex = template.indexOf('}}', i + 2);
+      if (endIndex === -1) throw new Error('Unclosed slot in template');
 
+      const rawSlot = template.slice(i + 2, endIndex);
       const [slotId, initialValue] = rawSlot.split(':').map((s) => s.trim());
+
       currentLine.push({
         type: 'slot',
         id: slotId,
-        currentValue: initialValue || null,
+        currentValue: initialValue ?? null,
       });
 
-      i += 2;
+      i = endIndex + 2;
       continue;
     }
 
-    if (char === ' ' || char === '\t') {
+    if (SYNTAX_CONFIG.delimiters.includes(char)) {
       flushBuffer();
-      currentLine.push({type: 'text', content: char});
-      i++;
-      continue;
-    }
-
-    if (SYNTAX_CONFIG.punctuation.includes(char)) {
-      flushBuffer();
-      currentLine.push({type: 'punctuation', content: char});
+      if (char !== ' ' && char !== '\t') {
+        currentLine.push({type: 'punctuation', content: char});
+      } else {
+        currentLine.push({type: 'text', content: char});
+      }
       i++;
       continue;
     }
@@ -73,9 +61,6 @@ export const tokenizeCodeTemplate = (template: string): CodeLine[] => {
   }
 
   flushBuffer();
-  if (currentLine.length > 0) {
-    lines.push(currentLine);
-  }
-
+  if (currentLine.length > 0) lines.push(currentLine);
   return lines;
 };
