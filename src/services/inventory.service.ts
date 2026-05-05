@@ -47,23 +47,23 @@ export class InventoryService {
 
     if (!state) throw new NotFoundError('Save state missing');
 
-    const fixedIds = new Set(state.fixedGlitches.map((g) => g.id));
+    const fixedIds = new Set((state.fixedGlitches ?? []).map((g) => g.id));
+
     const currentInventory = InventorySchema.parse(state.inventory || []);
 
     const requiredBlocks = allSolutions
       .filter((e) => !fixedIds.has(e.id))
       .flatMap((e) => Object.values(e.solutionMap));
 
-    const inventoryMap = new Map<string, number>();
-    for (const b of currentInventory) {
-      const key = `${b.type}:${JSON.stringify(b.value)}`;
-      inventoryMap.set(key, (inventoryMap.get(key) || 0) + 1);
-    }
+    requiredBlocks.sort(() => Math.random() - 0.5);
+
+    const inventorySet = new Set(
+      currentInventory.map((b) => `${b.type}:${JSON.stringify(b.value)}`),
+    );
 
     for (const req of requiredBlocks) {
       const key = `${req.type}:${JSON.stringify(req.value)}`;
-      const count = inventoryMap.get(key) || 0;
-      if (count === 0) {
+      if (!inventorySet.has(key)) {
         return this.createAndSaveBlock(userId, req);
       }
     }
