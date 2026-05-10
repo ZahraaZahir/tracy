@@ -12,7 +12,7 @@ async function main() {
       solutionMap: {s1: {type: 'float', value: 9.81}},
 
       errorMessages: {
-        s1: 'The cow is still defying gravity! Check the gravity constant.',
+        s1: 'The cow is still defying gravity! Check the gravity value.',
       },
     },
     {
@@ -23,7 +23,7 @@ async function main() {
       solutionMap: {s1: {type: 'boolean', value: false}},
 
       errorMessages: {
-        s1: 'Logic Conflict: A character cannot move left and right simultaneously.',
+        s1: 'Your character cannot move left and right at the same time, fix that.',
       },
     },
     {
@@ -34,7 +34,7 @@ async function main() {
       solutionMap: {s1: {type: 'string', value: 'Sunflower'}},
 
       errorMessages: {
-        s1: 'The soil remains empty. Tracy, the mouse needs to plant these Sunflowers!',
+        s1: 'The mouse needs to have a seed to plant!',
       },
     },
   ];

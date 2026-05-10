@@ -10,6 +10,7 @@ export class ValueMatchStrategy implements PuzzleStrategy {
     answers: Record<string, LogicBlock>,
     solutions: Record<string, SolutionValue>,
     inventory: LogicBlock[],
+    errorMessages: Record<string, string> | null,
   ): PuzzleResult {
     const usedBlockIds: string[] = [];
     const availableInventory = [...inventory];
@@ -17,7 +18,11 @@ export class ValueMatchStrategy implements PuzzleStrategy {
     for (const slotId of Object.keys(solutions)) {
       const blockParse = LogicBlockSchema.safeParse(answers[slotId]);
       if (!blockParse.success)
-        return {correct: false, wrongSlot: slotId, message: 'Invalid block'};
+        return {
+          correct: false,
+          wrongSlot: slotId,
+          message: 'Invalid block data.',
+        };
 
       const playerBlock = blockParse.data;
       const inventoryIndex = availableInventory.findIndex(
@@ -28,7 +33,7 @@ export class ValueMatchStrategy implements PuzzleStrategy {
         return {
           correct: false,
           wrongSlot: slotId,
-          message: `Block ${playerBlock.blockId} not owned or already used.`,
+          message: `Block not found in inventory.`,
         };
       }
 
@@ -38,7 +43,9 @@ export class ValueMatchStrategy implements PuzzleStrategy {
         JSON.stringify(actualBlock.value) !==
         JSON.stringify(solutions[slotId].value)
       ) {
-        return {correct: false, wrongSlot: slotId, message: 'Logic mismatch'};
+        const customMessage =
+          errorMessages?.[slotId] || 'Logic mismatch detected.';
+        return {correct: false, wrongSlot: slotId, message: customMessage};
       }
 
       usedBlockIds.push(actualBlock.blockId);
