@@ -41,6 +41,7 @@ export class PuzzleService {
       answers,
       entity.solutionMap,
       inventory,
+      entity.errorMessages,
     );
 
     if (!result.correct) {

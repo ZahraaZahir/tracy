@@ -12,5 +12,6 @@ export interface PuzzleStrategy {
     answers: Record<string, LogicBlock>,
     solutions: Record<string, SolutionValue>,
     inventory: LogicBlock[],
+    errorMessages: Record<string, string> | null,
   ): PuzzleResult;
 }
