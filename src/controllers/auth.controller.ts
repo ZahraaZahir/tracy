@@ -1,5 +1,6 @@
 import {Request, Response} from 'express';
 import {AuthService} from '../services/auth.service.js';
+import {registerSchema, loginSchema} from '../validators/auth.validator.js';
 
 let authService: AuthService;
 
@@ -11,7 +12,7 @@ const getAuthService = () => {
 };
 
 export const register = async (req: Request, res: Response) => {
-  const {email, password, username} = req.body;
+  const {email, password, username} = registerSchema.parse(req.body);
   const result = await getAuthService().register(email, password, username);
 
   res.status(201).json({
@@ -21,7 +22,7 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-  const {identifier, password} = req.body;
+  const {identifier, password} = loginSchema.parse(req.body);
   const result = await getAuthService().login(identifier, password);
 
   res.status(200).json({
