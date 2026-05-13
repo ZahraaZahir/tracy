@@ -8,17 +8,6 @@ import {
 } from '../validators/inventory.validator.js';
 import {ConflictError, NotFoundError} from '../errors/errors.js';
 
-const createFrequencyMap = (
-  blocks: Array<{type: string; value: any}>,
-): Map<string, number> => {
-  const map = new Map<string, number>();
-  for (const block of blocks) {
-    const key = `${block.type}:${JSON.stringify(block.value)}`;
-    map.set(key, (map.get(key) || 0) + 1);
-  }
-  return map;
-};
-
 export class InventoryService {
   constructor(
     private worldRepo: WorldRepository,
