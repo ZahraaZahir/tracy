@@ -6,7 +6,7 @@ import worldRoutes from './routes/world.routes.js';
 import entityRoutes from './routes/entity.routes.js';
 import {errorHandler} from './middleware/error.middleware.js';
 
-const PORT = 3050;
+const PORT = process.env.PORT || 3050;
 const app = express();
 
 app.use(express.json());
