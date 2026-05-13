@@ -28,9 +28,8 @@ export class ConflictError extends AppError {
   }
 }
 
-export class RepositoryError extends Error {
+export class RepositoryError extends AppError {
   constructor(public readonly code: 'NOT_FOUND' | 'VERSION_CONFLICT') {
-    super(code);
-    Object.setPrototypeOf(this, new.target.prototype);
+    super(code, code === 'VERSION_CONFLICT' ? 409 : 404);
   }
 }
