@@ -1,9 +1,7 @@
 import {prisma} from '../lib/prisma.js';
 import {SolutionMapSchema} from '../validators/inventory.validator.js';
 import {ParsedGameEntity, EntitySolutionMap} from '../types/entity.types.js';
-import {z} from 'zod';
-
-const ErrorMessagesSchema = z.record(z.string(), z.string());
+import {ErrorMessagesSchema} from '../validators/error.validator.js';
 
 export class EntityRepository {
   async getEntityById(id: string): Promise<ParsedGameEntity | null> {
