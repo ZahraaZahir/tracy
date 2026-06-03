@@ -20,13 +20,7 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use(express.json());
 app.use(cors());
-app.use(globalLimiter);
-
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/world', worldRoutes);
-app.use('/api/v1/entities', entityRoutes);
 
 app.get('/status', (req: Request, res: Response) => {
   res.json({
@@ -39,6 +33,14 @@ app.get('/status', (req: Request, res: Response) => {
 app.get('/', (req: Request, res: Response) => {
   res.send(`<h1>Tracy Backend is Running</h1>`);
 });
+
+app.use(globalLimiter);
+
+app.use(express.json());
+
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/world', worldRoutes);
+app.use('/api/v1/entities', entityRoutes);
 
 app.use(errorHandler);
 
