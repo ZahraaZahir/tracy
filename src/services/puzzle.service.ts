@@ -1,5 +1,6 @@
 import {EntityRepository} from '../repositories/entity.repository.js';
 import {WorldRepository} from '../repositories/world.repository.js';
+import { LeaderboardService } from './leaderboard.service.js';
 import {
   InventorySchema,
   LogicBlock,
@@ -12,10 +13,12 @@ export class PuzzleService {
     private entityRepo: EntityRepository,
     private worldRepo: WorldRepository,
     private validator: PuzzleStrategy,
+     private leaderboardService: LeaderboardService
   ) {}
 
   async solve(
     userId: string,
+    username: string,
     entityId: string,
     answers: Record<string, LogicBlock>,
   ) {
@@ -59,6 +62,8 @@ export class PuzzleService {
         result.usedBlockIds,
         state.version,
       );
+      const newScore = updatedState.fixedGlitches.length;
+      await this.leaderboardService.updateRank(username, newScore);
 
       return {
         success: true,
