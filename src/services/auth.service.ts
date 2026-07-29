@@ -17,7 +17,8 @@ export class AuthService {
     const hash = await argon2.hash(pass);
     const newUser = await this.userRepo.createUser(email, hash, username);
 
-    const token = jwt.sign({userId: newUser.id}, process.env.JWT_SECRET!, {
+    const token = jwt.sign({username: username}, process.env.JWT_SECRET!, {
+      subject: newUser.id,
       expiresIn: '7d',
     });
 
@@ -36,9 +37,14 @@ export class AuthService {
       throw new UnauthorizedError('Invalid credentials');
     }
 
-    const token = jwt.sign({userId: user.id}, process.env.JWT_SECRET!, {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign(
+      {username: user.profile?.username},
+      process.env.JWT_SECRET!,
+      {
+        subject: user.id,
+        expiresIn: '7d',
+      },
+    );
 
     return {token, username: user.profile?.username};
   }

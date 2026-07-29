@@ -32,7 +32,7 @@ const initServices = () => {
 export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
   initServices();
   const {id} = entityParamSchema.parse(req.params);
-  const userId = req.user!.userId;
+  const userId = req.user!.sub;
 
   const playerState = await worldService.load(userId);
   const isFixed = playerState.fixedGlitches.includes(id);
@@ -53,7 +53,7 @@ export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
   const {id} = entityParamSchema.parse(req.params);
   const {answers} = solveEntitySchema.parse(req.body);
 
-  const result = await puzzleService.solve(req.user!.userId, id, answers);
+  const result = await puzzleService.solve(req.user!.sub, id, answers);
 
   res.status(result.success ? 200 : 400).json({
     message: result.message,
