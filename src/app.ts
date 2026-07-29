@@ -7,7 +7,7 @@ import worldRoutes from './routes/world.routes.js';
 import entityRoutes from './routes/entity.routes.js';
 import {errorHandler} from './middleware/error.middleware.js';
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3050;
 const app = express();
 
 const globalLimiter = rateLimit({
@@ -22,21 +22,21 @@ const globalLimiter = rateLimit({
 
 app.use(cors());
 
-app.get('/status', (req: Request, res: Response) => {
+app.use(globalLimiter);
+
+app.use(express.json());
+
+app.get('/', (req: Request, res: Response) => {
+  res.send(`<h1>Tracy Backend is Running</h1>`);
+});
+
+app.get('/api/v1/status', (req: Request, res: Response) => {
   res.json({
     status: 'active',
     system: 'Tracy',
     uptime: process.uptime(),
   });
 });
-
-app.get('/', (req: Request, res: Response) => {
-  res.send(`<h1>Tracy Backend is Running</h1>`);
-});
-
-app.use(globalLimiter);
-
-app.use(express.json());
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/world', worldRoutes);
