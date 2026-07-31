@@ -1,14 +1,9 @@
-import { Response } from 'express';
-import { AuthenticatedRequest } from '../types/auth.types.js';
+import { Response, Request } from 'express';
 import { LeaderboardService } from '../services/leaderboard.service.js';
-import { LeaderboardRepository } from '../repositories/leaderboard.repository.js';
 
-const leaderboardService = new LeaderboardService(new LeaderboardRepository());
+const lbService = new LeaderboardService();
 
-export const getLeaderboard = async (req: AuthenticatedRequest, res: Response) => {
-  const topPlayers = await leaderboardService.getTopTen();
-  res.status(200).json({
-    message: 'Leaderboard retrieved',
-    data: topPlayers,
-  });
+export const getLeaderboard = async (_req: Request, res: Response) => {
+  const top = await lbService.getBoard();
+  res.json({ success: true, data: top });
 };
