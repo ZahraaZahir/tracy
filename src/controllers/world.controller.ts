@@ -21,19 +21,24 @@ const initServices = () => {
 export const saveState = async (req: AuthenticatedRequest, res: Response) => {
   initServices();
   const data = saveStateSchema.parse(req.body);
-  const result = await worldService.save(req.user!.userId, data);
+  
+
+  const result = await worldService.save(req.user!.sub, data);
 
   res.status(200).json({message: 'State saved successfully', data: result});
 };
 
 export const loadState = async (req: AuthenticatedRequest, res: Response) => {
   initServices();
-  const result = await worldService.load(req.user!.userId);
+  
+
+  const result = await worldService.load(req.user!.sub);
   res.status(200).json({message: 'Loaded', data: result});
 };
 
 export const lootBlock = async (req: AuthenticatedRequest, res: Response) => {
   initServices();
-  const block = await inventoryService.generateLoot(req.user!.userId);
+  
+  const block = await inventoryService.generateLoot(req.user!.sub);
   res.status(200).json({message: 'Loot generated', data: block});
 };
