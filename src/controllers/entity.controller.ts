@@ -3,6 +3,7 @@ import {AuthenticatedRequest} from '../types/auth.types.js';
 import {EntityService} from '../services/entity.service.js';
 import {WorldService} from '../services/world.service.js';
 import {PuzzleService} from '../services/puzzle.service.js';
+import {LeaderboardService} from '../services/leaderboard.service.js';
 import {ValueMatchStrategy} from '../services/strategies/value-match.strategy.js';
 import {EntityRepository} from '../repositories/entity.repository.js';
 import {WorldRepository} from '../repositories/world.repository.js';
@@ -14,9 +15,10 @@ import {
 let entityService: EntityService;
 let worldService: WorldService;
 let puzzleService: PuzzleService;
+const lbService = new LeaderboardService();
 
 const initServices = () => {
-  if (!entityService) {
+  if (!worldService) {
     const worldRepo = new WorldRepository();
     const entityRepo = new EntityRepository();
     entityService = new EntityService(entityRepo);
@@ -32,7 +34,7 @@ const initServices = () => {
 export const getEntity = async (req: AuthenticatedRequest, res: Response) => {
   initServices();
   const {id} = entityParamSchema.parse(req.params);
-  const userId = req.user!.userId;
+  const userId = req.user!.sub;
 
   const playerState = await worldService.load(userId);
   const isFixed = playerState.fixedGlitches.includes(id);
@@ -53,10 +55,16 @@ export const solveEntity = async (req: AuthenticatedRequest, res: Response) => {
   const {id} = entityParamSchema.parse(req.params);
   const {answers} = solveEntitySchema.parse(req.body);
 
-  const result = await puzzleService.solve(req.user!.userId, id, answers);
+  const {sub, username} = req.user!;
+
+  const result = await puzzleService.solve(sub, id, answers);
+
+  if (result.success && typeof result.fixedCount === 'number') {
+    await lbService.updateRank(sub, result.fixedCount);
+  }
 
   res.status(result.success ? 200 : 400).json({
-    message: result.message,
+    message: result.message || (result.success ? 'Fixed!' : 'Failed'),
     data: result,
   });
 };

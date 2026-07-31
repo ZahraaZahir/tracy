@@ -1,84 +1,34 @@
-import {EntityRepository} from '../repositories/entity.repository.js';
-import {WorldRepository} from '../repositories/world.repository.js';
-import { LeaderboardService } from './leaderboard.service.js';
-import {
-  InventorySchema,
-  LogicBlock,
-} from '../validators/inventory.validator.js';
-import {PuzzleStrategy} from './strategies/puzzle.strategy.js';
-import {NotFoundError, AppError, RepositoryError} from '../errors/errors.js';
+import { EntityRepository } from '../repositories/entity.repository.js';
+import { WorldRepository } from '../repositories/world.repository.js';
+import { LogicBlock } from '../validators/inventory.validator.js';
+import { PuzzleStrategy } from './strategies/puzzle.strategy.js';
+import { NotFoundError } from '../errors/errors.js';
 
 export class PuzzleService {
   constructor(
     private entityRepo: EntityRepository,
     private worldRepo: WorldRepository,
     private validator: PuzzleStrategy,
-     private leaderboardService: LeaderboardService
   ) {}
 
-  async solve(
-    userId: string,
-    username: string,
-    entityId: string,
-    answers: Record<string, LogicBlock>,
-  ) {
+  async solve(userId: string, entityId: string, answers: Record<string, LogicBlock>) {
     const [entity, state] = await Promise.all([
       this.entityRepo.getEntityById(entityId),
       this.worldRepo.getWorldState(userId),
     ]);
 
-    if (!entity) throw new NotFoundError(`NPC ${entityId} not found`);
-    if (!state) throw new NotFoundError('Save state missing');
+    if (!entity || !state) throw new NotFoundError('Data missing');
+    if (state.fixedGlitches.some((g) => g.id === entityId)) return { success: true, alreadySolved: true };
 
-    if (state.fixedGlitches.some((g) => g.id === entityId)) {
-      return {success: true, alreadySolved: true, message: 'Already fixed'};
-    }
+    const result = this.validator.validate(answers, entity.solutionMap!, state.inventory as any, entity.errorMessages);
+    if (!result.correct) return { success: false, wrongSlot: result.wrongSlot, message: result.message };
 
-    const inventory = InventorySchema.parse(state.inventory || []);
+    const updatedState = await this.worldRepo.completePuzzleAtomic(userId, entityId, result.usedBlockIds, state.version);
 
-    if (!entity.solutionMap) {
-      throw new NotFoundError(`NPC ${entityId} has no solution defined`);
-    }
-
-    const result = this.validator.validate(
-      answers,
-      entity.solutionMap,
-      inventory,
-      entity.errorMessages,
-    );
-
-    if (!result.correct) {
-      return {
-        success: false,
-        wrongSlot: result.wrongSlot,
-        message: result.message,
-      };
-    }
-
-    try {
-      const updatedState = await this.worldRepo.completePuzzleAtomic(
-        userId,
-        entityId,
-        result.usedBlockIds,
-        state.version,
-      );
-      const newScore = updatedState.fixedGlitches.length;
-      await this.leaderboardService.updateRank(username, newScore);
-
-      return {
-        success: true,
-        message: 'Fixed!',
-        fixedGlitches: updatedState.fixedGlitches.map((g) => g.id),
-        totalEntities: await this.entityRepo.countAllEntities(),
-      };
-    } catch (error: unknown) {
-      if (
-        error instanceof RepositoryError &&
-        error.code === 'VERSION_CONFLICT'
-      ) {
-        throw new AppError('State conflict detected. Retry.', 409);
-      }
-      throw error;
-    }
+    return {
+      success: true,
+      fixedCount: updatedState.fixedGlitches.length, // Used for leaderboard update
+      fixedGlitches: updatedState.fixedGlitches.map((g) => g.id)
+    };
   }
 }
