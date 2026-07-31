@@ -1,13 +1,17 @@
 import { LeaderboardRepository } from '../repositories/leaderboard.repository.js';
 
 export class LeaderboardService {
-  constructor(private leaderboardRepo: LeaderboardRepository) {}
+  private repo = new LeaderboardRepository();
 
-  async updateRank(username: string, score: number): Promise<void> {
-    await this.leaderboardRepo.updateScore(username, score);
+  async syncUser(userId: string, username: string) {
+    await this.repo.saveNameMapping(userId, username);
   }
 
-  async getTopTen() {
-    return await this.leaderboardRepo.getTopPlayers(10);
+  async updateRank(userId: string, score: number) {
+    await this.repo.updateScore(userId, score);
+  }
+
+  async getBoard() {
+    return await this.repo.getTopPlayers(10);
   }
 }
