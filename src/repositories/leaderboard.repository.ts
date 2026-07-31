@@ -1,23 +1,33 @@
 import { redis } from '../lib/redis.js';
 
 export class LeaderboardRepository {
-  private readonly KEY = 'tracy:leaderboard';
+  private readonly RANK_KEY = 'tracy:ranks';
+  private readonly NAME_KEY = 'tracy:usernames';
 
-  async updateScore(username: string, score: number): Promise<void> {
-    await redis.zadd(this.KEY, score, username);
+  async saveNameMapping(userId: string, username: string): Promise<void> {
+    await redis.hset(this.NAME_KEY, userId, username);
   }
 
-  
-  async getTopPlayers(limit: number = 10) {
+  async updateScore(userId: string, score: number): Promise<void> {
+    await redis.zadd(this.RANK_KEY, score, userId);
+  }
 
-    const rawData = await redis.zrevrange(this.KEY, 0, limit - 1, 'WITHSCORES');
-    const leaderboard = [];
+  async getTopPlayers(limit: number = 10) {
+    const rawData = await redis.zrevrange(this.RANK_KEY, 0, limit - 1, 'WITHSCORES');
+    if (rawData.length === 0) return [];
+
+    const ids = [];
+    const scores = [];
     for (let i = 0; i < rawData.length; i += 2) {
-      leaderboard.push({
-        username: rawData[i],
-        score: parseInt(rawData[i + 1], 10),
-      });
+      ids.push(rawData[i]);
+      scores.push(parseInt(rawData[i + 1], 10));
     }
-    return leaderboard;
+
+    const names = await redis.hmget(this.NAME_KEY, ...ids);
+
+    return ids.map((id, index) => ({
+      username: names[index] || 'Unknown Developer',
+      score: scores[index]
+    }));
   }
 }
