@@ -16,17 +16,19 @@ export class LeaderboardRepository {
     const rawData = await redis.zrevrange(this.RANK_KEY, 0, limit - 1, 'WITHSCORES');
     if (rawData.length === 0) return [];
 
-    const ids = [];
-    const scores = [];
+
+    const ids: string[] = [];
+    const scores: number[] = [];
+
     for (let i = 0; i < rawData.length; i += 2) {
       ids.push(rawData[i]);
       scores.push(parseInt(rawData[i + 1], 10));
     }
 
-    const names = await redis.hmget(this.NAME_KEY, ...ids);
+    const usernames = await redis.hmget(this.NAME_KEY, ...ids);
 
     return ids.map((id, index) => ({
-      username: names[index] || 'Unknown Developer',
+      username: usernames[index] || 'Unknown Developer',
       score: scores[index]
     }));
   }
