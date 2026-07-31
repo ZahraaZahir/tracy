@@ -1,7 +1,7 @@
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
-import {UserRepository} from '../repositories/user.repository.js';
-import {ConflictError, UnauthorizedError} from '../errors/errors.js';
+import { UserRepository } from '../repositories/user.repository.js';
+import { ConflictError, UnauthorizedError } from '../errors/errors.js';
 
 export class AuthService {
   private userRepo = new UserRepository();
@@ -17,29 +17,29 @@ export class AuthService {
     const hash = await argon2.hash(pass);
     const newUser = await this.userRepo.createUser(email, hash, username);
 
-    const token = jwt.sign({userId: newUser.id}, process.env.JWT_SECRET!, {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign(
+      { username: username }, 
+      process.env.JWT_SECRET!, 
+      { subject: newUser.id, expiresIn: '7d' }
+    );
 
-    return {token, username};
+    return { token, username, userId: newUser.id };
   }
 
   async login(identifier: string, pass: string) {
     const user = await this.userRepo.findByIdentifier(identifier);
 
-    if (!user) {
+    if (!user || !(await argon2.verify(user.passwordHash, pass))) {
       throw new UnauthorizedError('Invalid credentials');
     }
 
-    const isPasswordValid = await argon2.verify(user.passwordHash, pass);
-    if (!isPasswordValid) {
-      throw new UnauthorizedError('Invalid credentials');
-    }
+    const username = user.profile?.username || 'Unknown';
+    const token = jwt.sign(
+      { username: username }, 
+      process.env.JWT_SECRET!, 
+      { subject: user.id, expiresIn: '7d' }
+    );
 
-    const token = jwt.sign({userId: user.id}, process.env.JWT_SECRET!, {
-      expiresIn: '7d',
-    });
-
-    return {token, username: user.profile?.username};
+    return { token, username, userId: user.id };
   }
 }

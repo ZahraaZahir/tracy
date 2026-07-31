@@ -1,32 +1,24 @@
-import {Request, Response} from 'express';
-import {AuthService} from '../services/auth.service.js';
-import {registerSchema, loginSchema} from '../validators/auth.validator.js';
+import { Request, Response } from 'express';
+import { AuthService } from '../services/auth.service.js';
+import { LeaderboardService } from '../services/leaderboard.service.js';
 
-let authService: AuthService;
-
-const getAuthService = () => {
-  if (!authService) {
-    authService = new AuthService();
-  }
-  return authService;
-};
+const authService = new AuthService();
+const lbService = new LeaderboardService();
 
 export const register = async (req: Request, res: Response) => {
-  const {email, password, username} = registerSchema.parse(req.body);
-  const result = await getAuthService().register(email, password, username);
+  const { email, password, username } = req.body;
+  const result = await authService.register(email, password, username);
 
-  res.status(201).json({
-    message: 'User registered successfully',
-    data: result,
-  });
+  await lbService.syncUser(result.userId, result.username);
+
+  res.status(201).json({ data: result });
 };
 
 export const login = async (req: Request, res: Response) => {
-  const {identifier, password} = loginSchema.parse(req.body);
-  const result = await getAuthService().login(identifier, password);
+  const { identifier, password } = req.body;
+  const result = await authService.login(identifier, password);
 
-  res.status(200).json({
-    message: 'Login successful.',
-    data: result,
-  });
+  await lbService.syncUser(result.userId, result.username);
+
+  res.status(200).json({ data: result });
 };
